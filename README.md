@@ -1,1 +1,3 @@
-# visual-SNN
+# Spiking Neural Network (SNN) model of the human visual system
+
+SNN model of the human visual system to investigate how the visual system learns to represent objects in relation to the binding problem of psychology. This work is being carried out by myself, Patrick McCarthy, under the supervision of Dr Simon Stringer of the Oxford Laboratory for Theoretical Neuroscience and Artificial Intelligence and Prof Simon Schultz of Imperial's Neural Coding and Neurodegenerative Disease Lab.

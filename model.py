@@ -5,20 +5,50 @@
 
 from brian2 import *
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy import misc
+from scipy import ndimage as ndi
+from skimage.filters import gabor_kernel
 import math
-
-from brian2 import NeuronGroup
 
 start_scope()
 
+#%%
 # read in input image
-
+im = plt.imread('data/sample.png')                                                                                      # read in test image
+plt.imshow(im)                                                                                                          # show image to check import worked
 
 # variables and parameters for Layer 0 (Gabor filter layer)
+ksize = 5 # kernel size
+sigma = 5 # SD of Gaussian in Gabor filters
+theta = 1*np.pi/2 # filter orientation
+lamda = 1*np.pi/4 # wavelength of sinusoid in Gabor filters
+gamma = 0.1 # filter spatial aspect ratio
+phi = 0.8 # phase offset of sinusoid in Gabor filters
+
+# create Gabor filter kernels which will be used to extract spatial features from image
 
 
+# function to compute features using Gabor filter kernels
+def compute_features(image, kernels):
+    features = np.zeros((len(kernels), 2), dtype=np.double)
+    for k, kernel in enumerate(kernels):
+        filtered = ndi.convolve(image, kernel, mode='wrap')
+        features[k, 0] = filtered.mean()
+        features[k, 1] = filtered.var()
+    return features
+
+# function to convert Gabor filter outputs into Poisson spike trains - POSSIBLE COMBINE
+def features_to_spikes():
+    return 0
+
+# function which combines compute_features and features_to_spikes functions
+def image_to_spikes():
+    return 0
+
+#%%
 # variables and parameters for neurons in Layers 1-4
-layer_width = 10                                                                                                        # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
+layer_width = 20                                                                                                        # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
 N = layer_width**2
 neuron_spacing = 50*umetre                                                                                              # required to assign spatial locations of neurons
 v_th = 0                                                                                                                # threshold potential
@@ -30,11 +60,11 @@ for x in range(layer_width):                                                    
     for y in range(layer_width):
         x_locs.append(x)
         y_locs.append(y)
-x_locs = x_locs*neuron_spacing
-y_locs = y_locs*neuron_spacing
+x_locs = x_locs*neuron_spacing                                                                                          # multiply by neuron spacing to give actual spatial dimensions
+y_locs = y_locs*neuron_spacing 
 # variables to enable creation of randomised connections between layers within topologically corresponding regions
 num_conn =  math.ceil(layer_width/10)**2                                                                                # number of connections from layer to a single neuron in next layer - 1/10 of layer width, rounding up to nearest integer and then squaring e.g for layer width 128, we would have 13^2 = 169 connections to each postsynaptic neuron
-p_conn = 0.5                                                                                                            # probability of connection between neurons - required to randomise connections
+p_conn = 0.5                                                                                                            # probability of connection between neurons - required to randomise connections, essentially defines sparsity of connections in a region
 neighbourhood_width  = math.sqrt(num_conn/p_conn)*umetre                                                                # define width of square neighbourhood from which to randomly select neurons to connect in each layer - approx. 1/10 of layer width, rounding up to nearest integer
 # parameters to enable Gaussian distributed axonal conduction delays
 mean_delay = 0                                                                                                          # mean for Gaussian distribution to draw conduction delays from
@@ -56,24 +86,23 @@ y                       : metre # y position
 # equations for STDP (trace learning rule)
 STDP_ODEs = '''
 # ODEs for trace learning rule
-w                                : 1
+w                             : 1
 dapre/dt = -apre/taupre       : 1 (event-driven)
 dapost/dt = -apost/taupost    : 1 (event-driven)
 '''
-STDP_pre_update = '''
+STDP_presyn_update = '''
 # update rule for presynaptic spike
 v_post += w
 apre += Apre
 w = clip(w+apost, 0, wmax)
 '''
-STDP_post_update = '''
+STDP_postsyn_update = '''
 # update rule for postsynaptic spike
 apost += Apost
 w = clip(w+apre, 0, wmax)
 '''
 
 # Layer 0 (Gabor filter layer)
-def gaborToPoisson():
 
 
 # Layer 1 (V2)
@@ -85,7 +114,8 @@ V2.y = y_locs
 V4 = NeuronGroup(N, LIF_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                                 # create group of LIF neurons
 V4.x = x_locs                                                                                                           # define spatial locations of V4 neurons
 V4.y = y_locs
-Syn_V2_V4 = Synapses(V2, V4, STDP_ODEs, on_pre=STDP_pre_update, on_post=STDP_post_update)                               # create synapses with STDP learning rule
+V4_mon = SpikeMonitor(V4)                                                                                               # create object to monitor spike times
+Syn_V2_V4 = Synapses(V2, V4, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)                         # create synapses with STDP learning rule
 Syn_V2_V4.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < neighbourhood_width', p=p_conn)                          # connect Layer 1 (V2) neurons to each Layer 2 (V4) neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
 num_Syn_V2_V4 = len(Syn_V2_V4.x_pre)                                                                                    # get number of synapses(can use x_pre or x_post to do this)
 Syn_V2_V4.delay = np.random.normal(mean_delay, SD_delay, num_Syn_V2_V4)*ms                                              # set Gaussian-ditributed synaptic delay between
@@ -94,16 +124,20 @@ Syn_V2_V4.delay = np.random.normal(mean_delay, SD_delay, num_Syn_V2_V4)*ms      
 TEO = NeuronGroup(N, LIF_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                                # create group of LIF neurons
 TEO.x = x_locs                                                                                                          # define spatial locations of TEO neurons
 TEO.y = y_locs
-Syn_V4_TEO = Synapses(V4, TEO, STDP_ODEs, on_pre=STDP_pre_update, on_post=STDP_post_update)                             # create synapses with STDP learning rule
+TEO_mon = SpikeMonitor(TEO)
+Syn_V4_TEO = Synapses(V4, TEO, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)                       # create synapses with STDP learning rule
 Syn_V4_TEO.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < neighbourhood_width', p=p_conn)                         # connect Layer 2 (V4) neurons to each Layer 3 (TEO) neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
 num_Syn_V4_TEO = len(Syn_V4_TEO.x_pre)                                                                                  # get number of synapses(can use x_pre or x_post to do this)
-Syn_V4_TEO.delay = np.random.normal(mean_delay, SD_delay, num_Syn_V4_TEO) * ms
+Syn_V4_TEO.delay = np.random.normal(mean_delay, SD_delay, num_Syn_V4_TEO)*ms
 
 # Layer 4 (TE)
 TE = NeuronGroup(N, LIF_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                                 # create group of LIF neurons
 TE.x = x_locs                                                                                                           # define spatial locations of TE neurons
 TE.y = y_locs
-Syn_TEO_TE = Synapses(TEO, TE, STDP_ODEs, on_pre=STDP_pre_update, on_post=STDP_post_update)
+TE_mon = SpikeMonitor(TE)
+Syn_TEO_TE = Synapses(TEO, TE, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
 Syn_TEO_TE.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < neighbourhood_width', p=p_conn)                         # connect Layer 3 (TEO) neurons to each Layer 4 (TE) neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
 num_Syn_TEO_TE = len(Syn_TEO_TE.x_pre)                                                                                  # get number of synapses(can use x_pre or x_post to do this)
 Syn_TEO_TE.delay = np.random.normal(mean_delay, SD_delay, num_Syn_TEO_TE)*ms
+
+#%%

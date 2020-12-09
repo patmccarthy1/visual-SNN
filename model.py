@@ -30,22 +30,24 @@ class SpikingVisNet:
         self._connect_layers()
         self._build_spike_monitors()
         self.filtered_images = [] 
-        self.network = Network(self.L0, self.L1_exc, self.L2_exc, self.L3_exc, self.L4_exc, 
-                               self.L0_mon, self.L1_exc_mon, self.L2_exc_mon, self.L3_exc_mon, self.L4_exc_mon, 
-                               self.Syn_L0_L1_exc, self.Syn_L1_exc_L2_exc, self.Syn_L2_exc_L3_exc, self.Syn_L3_exc_L4_exc)
+        self.network = Network(self.L0, self.L1_exc, self.L2_exc, self.L3_exc, self.L4_exc, self.L1_inh, self.L2_inh, self.L3_inh, self.L4_inh, 
+                               self.L0_mon, self.L1_exc_mon, self.L2_exc_mon, self.L3_exc_mon, self.L4_exc_mon, self.L1_inh_mon, self.L2_inh_mon, self.L3_inh_mon, self.L4_inh_mon,
+                               self.Syn_L0_L1_exc, self.Syn_L1_exc_L2_exc, self.Syn_L2_exc_L3_exc, self.Syn_L3_exc_L4_exc,
+                               self.Syn_L1_exc_L1_inh, self.Syn_L2_exc_L2_inh, self.Syn_L3_exc_L3_inh, self.Syn_L4_exc_L4_inh,
+                               self.Syn_L1_inh_L1_exc, self.Syn_L2_inh_L2_exc, self.Syn_L3_inh_L3_exc, self.Syn_L4_inh_L4_exc,
+                               self.Syn_L4_exc_L3_exc, self.Syn_L3_exc_L2_exc, self.Syn_L2_exc_L1_exc)
 
         
     # internal function to create and connect model layers upon class instantiation (called inside __init__)
     def _build_layers(self):
     
-        v_th = -0.01                                                                                                                        # threshold potential
-        v_0 = -0.07                                                                                                                         # starting potential
-        tau_m_poisson = 10 * ms 
-        tau_m_LIF = 5 * ms * ms
+        v_th = -0.01 # threshold potential
+        v_0 = -0.07 # starting potential
         
-        # variables for neurons in L0
+        # Poisson neuron parameters
+        tau_m_poisson = 10 * ms 
         poisson_layer_width = 16     
-        N_poisson = poisson_layer_width**2                                                                                                  # can change to np.sqrt(len(flattened_filtered_image)/len(self.filters)) to generalise to different image sizes
+        N_poisson = poisson_layer_width**2 # can change to np.sqrt(len(flattened_filtered_image)/len(self.filters)) to generalise to different image sizes
         poisson_neuron_spacing = 12.5*umetre
         
         # equations for neurons in L0
@@ -57,14 +59,14 @@ class SpikingVisNet:
         rate                                                                          : Hz     # firing rate to define Poisson distribution
         '''
         
-        # parameters for neurons in Layers 1-4
-        LIF_exc_layer_width = 8                                                                                                            # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
-        N_LIF_exc = LIF_exc_layer_width**2                                                                                                  # number of neurons in a layer
-        LIF_exc_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_exc_layer_width)                                           # required to assign spatial locations of neurons
+        # LIF neuron parameters
+        tau_m_LIF = 5 * ms 
+        LIF_exc_layer_width = 8 # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
+        N_LIF_exc = LIF_exc_layer_width**2 # number of neurons in a layer
+        LIF_exc_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_exc_layer_width) # required to assign spatial locations of neurons
         LIF_inh_layer_width = 4                                                                                                    
         N_LIF_inh = LIF_inh_layer_width**2                                                                                                 
         LIF_inh_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_inh_layer_width)                                           
-
 
         # parameters for STDP (trace learning rule)
         taupre = taupost = 20*ms
@@ -85,14 +87,13 @@ class SpikingVisNet:
         '''
 
         # Layer 0  
-        self.L0 = NeuronGroup(len(self.filters)*N_poisson, poisson_neurons, 
+        self.L0 = NeuronGroup(len(self.filters)*N_poisson, poisson_neurons, # create group of Poisson neurons for input layer
                               threshold='rand()*dt/second < rate*second', 
-                              reset='v = v_0', method='euler')                                                                                # create group of Poisson neurons with STDP learning rule
+                              reset='v = v_0', method='euler')
 
-        
         # Layer 1 
-        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of excitatory LIF neurons with STDP learning rule
-        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of inhibitory LIF neurons with STDP learning rule
+        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler') # create group of excitatory LIF neurons                       
+        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler') # creatr group of inhibitory LIF neurons                            
 
         # Layer 2 
         self.L2_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler') 
@@ -106,7 +107,7 @@ class SpikingVisNet:
         self.L4_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                         
         self.L4_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')
 
-        # create class variable copies of variables (required for namespace access for simulation and model summary function)
+        # create class variable copies of variables (required for namespace access for simulation)
         self.v_th = v_th                                                                                                           
         self.v_0 = v_0                                                                                                               
         self.tau_m_poisson = tau_m_poisson
@@ -138,8 +139,8 @@ class SpikingVisNet:
     def _connect_layers(self):
         
         # variables to enable creation of randomised connections between layers within topologically corresponding regions
-        num_conn = 5000                                                                                                                       # number of connections from layer to a single neuron in next layer
-        p_conn = 0.5                                                                                                                         # probability of connection between neurons - required to randomise connections, essentially defines sparsity of connections in a region
+        num_conn = 5000 # number of connections from layer to a neuron in next layer - WRONG, NEED TO FIGURE OUT HOW TO DEFINE THIS EXACTLY
+        p_conn = 0.5 # probability of connection between neurons - required to randomise connections, essentially defines sparsity of connections in a region
         fan_in_radius = np.sqrt(num_conn/(np.pi*p_conn)) * umetre  
         poisson_layer_width = self.poisson_layer_width   
         poisson_neuron_spacing = self.poisson_neuron_spacing
@@ -151,8 +152,8 @@ class SpikingVisNet:
         LIF_inh_neuron_spacing = self.LIF_inh_neuron_spacing
         
         # parameters to enable Gaussian distributed axonal conduction delays
-        mean_delay = 0.01                                                                                                                    # mean for Gaussian distribution to draw conduction delays from - units will be ms
-        SD_delay = 3                                                                                                                         # SD for Gaussian distribution to draw conduction delays from - units will be ms
+        mean_delay = 0.01                                                                                                                    
+        SD_delay = 3                                                                                                                      
         
         # variables and parameters for STDP (trace learning rule)
         taupre = self.taupre
@@ -185,10 +186,10 @@ class SpikingVisNet:
         # =============================================================================
         
         # Layer 0 to Layer 1 excitatory
-        self.Syn_L0_L1_exc = Synapses(self.L0, self.L1_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create synapses with STDP learning rule
-        self.Syn_L0_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                                     # connect lower layer neurons to random upper layer neurons with spatial relation (implicitly selects from random filters)
-        self.num_Syn_L0_L1_exc = len(self.Syn_L0_L1_exc.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
-        self.Syn_L0_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L0_L1_exc)*ms                                         # set Gaussian-ditributed synaptic delay 
+        self.Syn_L0_L1_exc = Synapses(self.L0, self.L1_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update) # create synapses with STDP learning rule
+        self.Syn_L0_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn) # connect lower layer neurons to random upper layer neurons with spatial relation (implicitly selects from random filters)
+        self.num_Syn_L0_L1_exc = len(self.Syn_L0_L1_exc.x_pre) # get number of synapses(can use x_pre or x_post to do this)
+        self.Syn_L0_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L0_L1_exc)*ms # set Gaussian-ditributed synaptic delay 
 
         # Layer 1 excitatory to Layer 2 excitatory
         self.Syn_L1_exc_L2_exc = Synapses(self.L1_exc, self.L2_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)            
@@ -284,14 +285,14 @@ class SpikingVisNet:
         
     # internal function to generate Gabor filters to be applied to input image (called inside _gabor_filter)
     def _generate_gabor_filters(self):
-        self.filters = []                                                                                                            # list to hold filters
-        ksize = 4                                                                                                                    # kernel size
-        phi_list = [0, np.pi/2, np.pi]                                                                                               # phase offset of sinusoid 
-        lamda = 2                                                                                                                    # wavelength of sinusoid 
-        theta_list = [0,np.pi/4,np.pi/2,3*np.pi/4]                                                                                   # filter orientation
-        b = 1.5                                                                                                                      # spatial bandwidth in octaves (will be used to determine SD)
+        self.filters = []                                                                                                            
+        ksize = 5 # kernel size
+        phi_list = [0, np.pi/2, np.pi] # phase offset of sinusoid 
+        lamda = 2 # wavelength of sinusoid 
+        theta_list = [0,np.pi/4, np.pi/2, 3*np.pi/4] # filter orientation
+        b = 1.5 # spatial bandwidth in octaves (will be used to determine SD)
         sigma = lamda*(2**b+1)/np.pi*(2**b-1) * np.sqrt(np.log(2)/2)
-        gamma = 0.5                                                                                                                  # filter aspect ratio
+        gamma = 0.5 # filter aspect ratio
         for phi in phi_list:
             for theta in theta_list:
                 filt = cv2.getGaborKernel((ksize,ksize), sigma, theta, lamda, gamma, phi, ktype=cv2.CV_32F)
@@ -300,19 +301,19 @@ class SpikingVisNet:
     
     # internal function to apply Gabor filters to SINGLE IMAGE and generate output image for each filter 
     def _image_to_spikes(self, image, filters):
-        filtered_image = np.empty([len(image),len(image),len(filters)],dtype=np.float32)                                             # NumPy array to store filtered images (first dimension is input image, second dimension is filters)                                                                                                                                     # iterate through images and filters
+        filtered_image = np.empty([len(image),len(image),len(filters)],dtype=np.float32) # NumPy array to store filtered images (first dimension is input image, second dimension is filters)                                                                                                                                     # iterate through images and filters
         for filt_idx, filt in enumerate(filters):
-            filtered = cv2.filter2D(image, cv2.CV_8UC3, filt)                                                                        # apply filter
+            filtered = cv2.filter2D(image, cv2.CV_8UC3, filt) # apply filter
             # show image
             # fig, ax = plt.subplots(1,1)
             # ax.imshow(filtered)
-            # ax.set_title('Filter {}'.format(filt_idx+1))                                                                           # plot filtered images                               
+            # ax.set_title('Filter {}'.format(filt_idx+1)) # plot filtered images                               
             # plt.axis('off')
             # plt.show()
-            filtered_image[:,:,filt_idx] = filtered                                                                                  # add filtered image to array
+            filtered_image[:,:,filt_idx] = filtered # add filtered image to array
         self.filtered_images.append(filtered_image)
-        flattened_filtered_image = np.ndarray.flatten(filtered_image)                                                                # flatten filtered images
-        self.L0.rate = flattened_filtered_image * 10e-8 * Hz                                                                         # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters
+        flattened_filtered_image = np.ndarray.flatten(filtered_image) # flatten filtered images
+        self.L0.rate = flattened_filtered_image * 10e-8 * Hz # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters - multiply by a coefficient (10e-8) to get biologically realistic values
         return filtered_image
     
     # =============================================================================
@@ -361,7 +362,7 @@ class SpikingVisNet:
     # function to pass images into model - EVENTUALLY REPLACE WITH TRAIN AND TEST FUNCTIONS WHERE STDP IS ON AND OFF, RESPECITVELY
     def run_simulation(self, image, length):
         filtered_image = self._image_to_spikes(image,self.filters)
-        self.network.run(length, namespace={'v_th': self.v_th,                                                                       # run simulations, passing dictionary of necessary parameters into namespace argument (simulation will raise error otherwise)
+        self.network.run(length, namespace={'v_th': self.v_th, # run simulations, passing dictionary of necessary parameters into namespace argument (simulation will raise error otherwise)
                                             'v_0': self.v_0,
                                             'tau_m_poisson': self.tau_m_poisson, 
                                             'tau_m_LIF': self.tau_m_poisson,
@@ -405,21 +406,21 @@ def get_neurons(mon,lower_i,upper_i):
     return neuron_set_i, neuron_set_t
 
 # function to visualise connectivity
-def visualise_connectivity(S):
-    Ns = len(S.source)
-    Nt = len(S.target)
+def visualise_connectivity(synapses):
+    Ns = len(synapses.source)
+    Nt = len(synapses.target)
     figure(figsize=(10, 4))
     subplot(121)
     plot(zeros(Ns), arange(Ns), 'ok', ms=0.5)
     plot(ones(Nt), arange(Nt), 'ok', ms=0.5)
-    for i, j in zip(S.i, S.j):
+    for i, j in zip(synapses.i, synapses.j):
         plot([0, 1], [i, j], '-k')
     xticks([0, 1], ['Source', 'Target'])
     ylabel('Neuron index')
     xlim(-0.1, 1.1)
     ylim(-1, max(Ns, Nt))
     subplot(122)
-    plot(S.i, S.j, 'ok', ms=0.5)
+    plot(synapses.i, synapses.j, 'ok', ms=0.5)
     xlim(-1, Ns)
     ylim(-1, Nt)
     xlabel('Source neuron index')

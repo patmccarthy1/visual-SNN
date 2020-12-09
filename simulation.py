@@ -15,8 +15,7 @@ if __name__ == '__main__':
     visualise_connectivity(visnet.Syn_L0_L1_exc)
     suptitle('Layer 0 - Layer 1 exc. connectivity')
     savefig('L0_L1_connectivity.png',dpi=500)
-    
-    #%%
+
     visualise_connectivity(visnet.Syn_L1_exc_L2_exc)
     suptitle('Layer 1 exc. - Layer 2 exc. connectivity')
     savefig('L1_L2_connectivity.png',dpi=500)

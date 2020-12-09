@@ -7,8 +7,15 @@ import glob
 class SpikingVisNet:
     
     '''
-    Class which builds a spiking neural network model of the
-    primate ventral visual pathway
+    Instantiating this class builds 4 layer spiking neural network model of the
+    primate ventral visual pathway with topologically corresponding STDP synapses 
+    between layers and feedforward, lateral and feedback connections.
+    
+    Layer 0: Retina-LGN-V1 complex as Poisson neurons with Gabor filter modulated firing rates
+    Layer 1: V2 as excitatory and inhibitory leaky integrate-and-fire neurons
+    Layer 2: V4 as excitatory and inhibitory leaky integrate-and-fire neurons
+    Layer 3: TEO as excitatory and inhibitory leaky integrate-and-fire neurons
+    Layer 4: TE as excitatory and inhibitory leaky integrate-and-fire neurons
     '''
     
     # =============================================================================
@@ -23,41 +30,43 @@ class SpikingVisNet:
         self._connect_layers()
         self._build_spike_monitors()
         self.filtered_images = [] 
-        self.network = Network(self.L0, self.L1, self.L2, self.L3, self.L4, self.L0_mon, self.L1_mon, self.L2_mon, self.L3_mon, self.L4_mon, self.Syn_L0_L1, self.Syn_L1_L2, self.Syn_L2_L3, self.Syn_L3_L4)
+        self.network = Network(self.L0, self.L1_exc, self.L2_exc, self.L3_exc, self.L4_exc, 
+                               self.L0_mon, self.L1_exc_mon, self.L2_exc_mon, self.L3_exc_mon, self.L4_exc_mon, 
+                               self.Syn_L0_L1_exc, self.Syn_L1_exc_L2_exc, self.Syn_L2_exc_L3_exc, self.Syn_L3_exc_L4_exc)
 
         
     # internal function to create and connect model layers upon class instantiation (called inside __init__)
     def _build_layers(self):
     
-        v_th = -0.01                                                                                                                # threshold potential
-        v_0 = -0.07                                                                                                                 # starting potential
+        v_th = -0.01                                                                                                                        # threshold potential
+        v_0 = -0.07                                                                                                                         # starting potential
         tau_m_poisson = 10 * ms 
-        tau_m_LIF = 10e-6 * ms
+        tau_m_LIF = 5 * ms * ms
         
         # variables for neurons in L0
         poisson_layer_width = 16     
-        N_poisson = poisson_layer_width**2                                                                                          # can change to np.sqrt(len(flattened_filtered_image)/len(self.filters)) to generalise to different image sizes
+        N_poisson = poisson_layer_width**2                                                                                                  # can change to np.sqrt(len(flattened_filtered_image)/len(self.filters)) to generalise to different image sizes
         poisson_neuron_spacing = 12.5*umetre
         
         # equations for neurons in L0
         poisson_neurons = '''
-        dv/dt = -(v-v_0)/tau_m_poisson                           : 1      # membrane potential
-        x = (i%poisson_layer_width)*poisson_neuron_spacing       : metre  # x position
-        y = (int(i/poisson_layer_width))*poisson_neuron_spacing  : metre  # y position
-        f = int(i/N_poisson)                                     : 1      # filter number
-        rate                                                     : Hz     # firing rate to define Poisson distribution
+        dv/dt = -(v-v_0)/tau_m_poisson                                                : 1      # membrane potential
+        x = (i%poisson_layer_width)*poisson_neuron_spacing                            : metre  # x position
+        y = (int(i/poisson_layer_width))%poisson_layer_width*poisson_neuron_spacing   : metre  # y position
+        f = int(i/N_poisson)                                                          : 1      # filter number
+        rate                                                                          : Hz     # firing rate to define Poisson distribution
         '''
         
-        # variables for neurons in Layers 1-4
-        LIF_exc_layer_width = 16                                                                                                        # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
+        # parameters for neurons in Layers 1-4
+        LIF_exc_layer_width = 8                                                                                                            # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
         N_LIF_exc = LIF_exc_layer_width**2                                                                                                  # number of neurons in a layer
-        LIF_exc_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_layer_width)                                           # required to assign spatial locations of neurons
-        LIF_inh_layer_width = 8                                                                                                        # width of Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
-        N_LIF_inh = LIF_inh_layer_width**2                                                                                                  # number of neurons in a layer
-        LIF_inh_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_layer_width)                                           # required to assign spatial locations of neurons
+        LIF_exc_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_exc_layer_width)                                           # required to assign spatial locations of neurons
+        LIF_inh_layer_width = 4                                                                                                    
+        N_LIF_inh = LIF_inh_layer_width**2                                                                                                 
+        LIF_inh_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_inh_layer_width)                                           
 
 
-        # variables and parameters for STDP (trace learning rule)
+        # parameters for STDP (trace learning rule)
         taupre = taupost = 20*ms
         wmax = 0.5
         Apre = 0.5
@@ -65,38 +74,37 @@ class SpikingVisNet:
         
         # equations for neurons in Layers 1-4
         LIF_exc_neurons = '''
-        dv/dt = -(v-v_0)/tau_m_LIF                       : 1      # membrane potential
-        x = (i%LIF_layer_width)*LIF_neuron_spacing       : metre  # x position
-        y = (int(i/LIF_layer_width))*LIF_neuron_spacing  : metre  # y position
+        dv/dt = -(v-v_0)/tau_m_LIF                               : 1      # membrane potential
+        x = (i%LIF_exc_layer_width)*LIF_exc_neuron_spacing       : metre  # x position
+        y = (int(i/LIF_exc_layer_width))*LIF_exc_neuron_spacing  : metre  # y position
         '''
         LIF_inh_neurons = '''
-        dv/dt = -(v-v_0)/tau_m_LIF                       : 1      # membrane potential
-        x = (i%LIF_layer_width)*LIF_neuron_spacing       : metre  # x position
-        y = (int(i/LIF_layer_width))*LIF_neuron_spacing  : metre  # y position
+        dv/dt = -(v-v_0)/tau_m_LIF                                : 1      # membrane potential
+        x = (i%LIF_inh_layer_width)*LIF_inh_neuron_spacing       : metre  # x position
+        y = (int(i/LIF_inh_layer_width))*LIF_inh_neuron_spacing   : metre  # y position
         '''
 
         # Layer 0  
         self.L0 = NeuronGroup(len(self.filters)*N_poisson, poisson_neurons, 
                               threshold='rand()*dt/second < rate*second', 
-                              reset='v = v_0', method='euler')                                                                       # create group of Poisson neurons with STDP learning rule
-        # for i in range(self.L0.N):
-        #     print('L0 neuron {}: [{:.5f},{:.5f},{}]'.format(self.L0.i[i],self.L0.x[i],self.L0.y[i],self.L0.f[i]))
+                              reset='v = v_0', method='euler')                                                                                # create group of Poisson neurons with STDP learning rule
+
         
         # Layer 1 
-        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of LIF neurons with STDP learning rule
-        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler'
+        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of excitatory LIF neurons with STDP learning rule
+        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of inhibitory LIF neurons with STDP learning rule
 
         # Layer 2 
-        self.L2_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of LIF neurons with STDP learning rule
-        self.L2_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler'
+        self.L2_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler') 
+        self.L2_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')
 
         # Layer 3 
-        self.L3_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of LIF neurons with STDP learning rule
-        self.L3_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler'
+        self.L3_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                         
+        self.L3_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')
 
         # Layer 4 
-        self.L4_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                             # create group of LIF neurons with STDP learning rule
-        self.L4_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler'
+        self.L4_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th', reset='v = v_0', method='euler')                         
+        self.L4_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th', reset='v = v_0', method='euler')
 
         # create class variable copies of variables (required for namespace access for simulation and model summary function)
         self.v_th = v_th                                                                                                           
@@ -106,9 +114,12 @@ class SpikingVisNet:
         self.poisson_layer_width = poisson_layer_width     
         self.N_poisson = N_poisson                                                                                 
         self.poisson_neuron_spacing = poisson_neuron_spacing
-        self.LIF_layer_width = LIF_layer_width                                                                                                    
-        self.N_LIF = N_LIF                                                                                      
-        self.LIF_neuron_spacing = LIF_neuron_spacing
+        self.LIF_exc_layer_width = LIF_exc_layer_width    
+        self.LIF_inh_layer_width = LIF_inh_layer_width                                                                                                                                                                                                    
+        self.N_LIF_exc = N_LIF_exc    
+        self.N_LIF_inh = N_LIF_inh                                                                                                                                                                        
+        self.LIF_exc_neuron_spacing = LIF_exc_neuron_spacing
+        self.LIF_inh_neuron_spacing = LIF_inh_neuron_spacing
         self.taupre = taupre
         self.taupost = taupost
         self.wmax = wmax
@@ -117,27 +128,31 @@ class SpikingVisNet:
         
     # internal function to create spike monitors
     def _build_spike_monitors(self):
-        self.L0_mon = SpikeMonitor(self.L0)                                                                                          # create object to monitor Layer 0 spike times
-        self.L1_mon = SpikeMonitor(self.L1)                                                                                          # create object to monitor Layer 1 spike times
-        self.L2_mon = SpikeMonitor(self.L2)                                                                                          # create object to monitor Layer 2 spike times
-        self.L3_mon = SpikeMonitor(self.L3)                                                                                          # create object to monitor Layer 3 spike times
-        self.L4_mon = SpikeMonitor(self.L4)                                                                                          # create object to monitor Layer 4 spike times
+        self.L0_mon = SpikeMonitor(self.L0)                                                                                                 
+        self.L1_exc_mon = SpikeMonitor(self.L1_exc)                                                                                         
+        self.L2_exc_mon = SpikeMonitor(self.L2_exc)                                                                                         
+        self.L3_exc_mon = SpikeMonitor(self.L3_exc)                                                                                       
+        self.L4_exc_mon = SpikeMonitor(self.L4_exc)                                                                                          
 
     # internal function to create synapses and connect layers
     def _connect_layers(self):
         
         # variables to enable creation of randomised connections between layers within topologically corresponding regions
-        num_conn = 100                                                                                                               # number of connections from layer to a single neuron in next layer
-        p_conn = 1                                                                                                                   # probability of connection between neurons - required to randomise connections, essentially defines sparsity of connections in a region
-        fan_in_radius = np.sqrt(num_conn/(np.pi*p_conn))*umetre     
+        num_conn = 5000                                                                                                                       # number of connections from layer to a single neuron in next layer
+        p_conn = 0.5                                                                                                                         # probability of connection between neurons - required to randomise connections, essentially defines sparsity of connections in a region
+        fan_in_radius = np.sqrt(num_conn/(np.pi*p_conn)) * umetre  
         poisson_layer_width = self.poisson_layer_width   
         poisson_neuron_spacing = self.poisson_neuron_spacing
-        LIF_layer_width = self.LIF_layer_width                                                                                                          
-        LIF_neuron_spacing = self.LIF_neuron_spacing
+        LIF_exc_layer_width = self.LIF_exc_layer_width
+        LIF_inh_layer_width = self.LIF_inh_layer_width                                                                                                                                                                                                                    
+        LIF_exc_layer_width = self.LIF_exc_layer_width                                                                                                          
+        LIF_inh_layer_width = self.LIF_inh_layer_width                                                                                                          
+        LIF_exc_neuron_spacing = self.LIF_exc_neuron_spacing
+        LIF_inh_neuron_spacing = self.LIF_inh_neuron_spacing
         
         # parameters to enable Gaussian distributed axonal conduction delays
-        mean_delay = 0.01                                                                                                            # mean for Gaussian distribution to draw conduction delays from - units will be ms
-        SD_delay = 3                                                                                                                 # SD for Gaussian distribution to draw conduction delays from - units will be ms
+        mean_delay = 0.01                                                                                                                    # mean for Gaussian distribution to draw conduction delays from - units will be ms
+        SD_delay = 3                                                                                                                         # SD for Gaussian distribution to draw conduction delays from - units will be ms
         
         # variables and parameters for STDP (trace learning rule)
         taupre = self.taupre
@@ -165,32 +180,108 @@ class SpikingVisNet:
         w = clip(w+apre, 0, wmax)
         '''
         
-        # Layer 0 (Poisson) neurons to Layer 1 (LIF) neurons
-        self.Syn_L0_L1 = Synapses(self.L0, self.L1, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create synapses with STDP learning rule
-        self.Syn_L0_L1.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                                 # connect random L0 Poisson neurons to random L1 neurons with spatial relation (implicitly selects from random filters)
-        self.num_Syn_L0_L1 = len(self.Syn_L0_L1.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
-    
-        # Layer 1 neurons to Layer 2 neurons
-        self.Syn_L1_L2 = Synapses(self.L1, self.L2, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create synapses with STDP learning rule
-        self.Syn_L1_L2.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                                # connect 100 Layer 1 neurons to each Layer 2  neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
-        self.num_Syn_L1_L2 = len(self.Syn_L1_L2.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
-        # print('number of connections: ', self.num_Syn_L1_L2)
-        # print('x locations: {}\n'.format(self.L2.x[:]))
-        # print('y locations: {}\n'.format(self.L2.y[:]))
-        self.Syn_L1_L2.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L1_L2)*ms                                         # set Gaussian-ditributed synaptic delay 
+        # =============================================================================
+        # feedforward connections       
+        # =============================================================================
         
-        # Layer 2 neurons to Layer 3 neurons
-        self.Syn_L2_L3 = Synapses(self.L2, self.L3, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create synapses with STDP learning rule
-        self.Syn_L2_L3.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                                # connect 100 Layer 2 neurons to each Layer 3 neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
-        self.num_Syn_L2_L3 = len(self.Syn_L2_L3.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
-        self.Syn_L2_L3.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_L3)*ms                                         # set Gaussian-ditributed synaptic delay
+        # Layer 0 to Layer 1 excitatory
+        self.Syn_L0_L1_exc = Synapses(self.L0, self.L1_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create synapses with STDP learning rule
+        self.Syn_L0_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                                     # connect lower layer neurons to random upper layer neurons with spatial relation (implicitly selects from random filters)
+        self.num_Syn_L0_L1_exc = len(self.Syn_L0_L1_exc.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
+        self.Syn_L0_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L0_L1_exc)*ms                                         # set Gaussian-ditributed synaptic delay 
+
+        # Layer 1 excitatory to Layer 2 excitatory
+        self.Syn_L1_exc_L2_exc = Synapses(self.L1_exc, self.L2_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)            
+        self.Syn_L1_exc_L2_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L1_exc_L2_exc = len(self.Syn_L1_exc_L2_exc.x_pre)                                                                               
+        self.Syn_L1_exc_L2_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L1_exc_L2_exc)*ms                                       
         
-        # Layer 3 neurons to Layer 4 neurons
-        self.Syn_L3_L4 = Synapses(self.L3, self.L4, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)               # create group of LIF neurons
-        self.Syn_L3_L4.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                                # connect 100 Layer 3 neurons to each Layer 4 neuron (by connecting with p_conn in neighbourhood of neighbourhood_width^2 neurons)
-        self.num_Syn_L3_L4 = len(self.Syn_L3_L4.x_pre)                                                                               # get number of synapses(can use x_pre or x_post to do this)
-        self.Syn_L3_L4.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_L4)*ms                                         # set Gaussian-ditributed synaptic delay
+        # Layer 2 excitatory to Layer 3 excitatory
+        self.Syn_L2_exc_L3_exc = Synapses(self.L2_exc, self.L3_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)             
+        self.Syn_L2_exc_L3_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                             
+        self.num_Syn_L2_exc_L3_exc = len(self.Syn_L2_exc_L3_exc.x_pre)                                                                             
+        self.Syn_L2_exc_L3_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_exc_L3_exc)*ms                                        
+        
+        # Layer 3 excitatory to Layer 4 excitatory
+        self.Syn_L3_exc_L4_exc = Synapses(self.L3_exc, self.L4_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)              
+        self.Syn_L3_exc_L4_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                               
+        self.num_Syn_L3_exc_L4_exc = len(self.Syn_L3_exc_L4_exc.x_pre)                                                                              
+        self.Syn_L3_exc_L4_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_exc_L4_exc)*ms                                       
     
+        # =============================================================================
+        # lateral connections        
+        # =============================================================================
+        
+        # Layer 1 excitatory to Layer 1 inhibitory 
+        self.Syn_L1_exc_L1_inh = Synapses(self.L1_exc, self.L1_inh, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L1_exc_L1_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L1_exc_L1_inh = len(self.Syn_L1_exc_L1_inh.x_pre)                                                                               
+        self.Syn_L1_exc_L1_inh.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L1_exc_L1_inh)*ms 
+        
+        # Layer 1 inhibitory to Layer 1 excitatory 
+        self.Syn_L1_inh_L1_exc = Synapses(self.L1_inh, self.L1_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L1_inh_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L1_inh_L1_exc = len(self.Syn_L1_inh_L1_exc.x_pre)                                                                               
+        self.Syn_L1_inh_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L1_inh_L1_exc)*ms 
+        
+        # Layer 2 excitatory to Layer 2 inhibitory 
+        self.Syn_L2_exc_L2_inh = Synapses(self.L2_exc, self.L2_inh, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L2_exc_L2_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L2_exc_L2_inh = len(self.Syn_L2_exc_L2_inh.x_pre)                                                                               
+        self.Syn_L2_exc_L2_inh.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_exc_L2_inh)*ms 
+        
+        # Layer 2 inhibitory to Layer 2 excitatory 
+        self.Syn_L2_inh_L2_exc = Synapses(self.L2_inh, self.L2_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L2_inh_L2_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L2_inh_L2_exc = len(self.Syn_L2_inh_L2_exc.x_pre)                                                                               
+        self.Syn_L2_inh_L2_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_inh_L2_exc)*ms 
+        
+        # Layer 3 excitatory to Layer 3 inhibitory 
+        self.Syn_L3_exc_L3_inh = Synapses(self.L3_exc, self.L3_inh, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L3_exc_L3_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L3_exc_L3_inh = len(self.Syn_L3_exc_L3_inh.x_pre)                                                                               
+        self.Syn_L3_exc_L3_inh.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_exc_L3_inh)*ms 
+        
+        # Layer 3 inhibitory to Layer 3 excitatory 
+        self.Syn_L3_inh_L3_exc = Synapses(self.L3_inh, self.L3_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L3_inh_L3_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L3_inh_L3_exc = len(self.Syn_L3_inh_L3_exc.x_pre)                                                                               
+        self.Syn_L3_inh_L3_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_inh_L3_exc)*ms
+
+        # Layer 4 excitatory to Layer 4 inhibitory 
+        self.Syn_L4_exc_L4_inh = Synapses(self.L4_exc, self.L4_inh, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L4_exc_L4_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L4_exc_L4_inh = len(self.Syn_L4_exc_L4_inh.x_pre)                                                                               
+        self.Syn_L4_exc_L4_inh.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L4_exc_L4_inh)*ms 
+        
+        # Layer 4 inhibitory to Layer 4 excitatory 
+        self.Syn_L4_inh_L4_exc = Synapses(self.L4_inh, self.L4_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)
+        self.Syn_L4_inh_L4_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius',p=p_conn)                               
+        self.num_Syn_L4_inh_L4_exc = len(self.Syn_L4_inh_L4_exc.x_pre)                                                                               
+        self.Syn_L4_inh_L4_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L4_inh_L4_exc)*ms
+
+        # =============================================================================
+        # feedback connections    
+        # =============================================================================
+    
+        # Layer 4 excitatory to Layer 3 excitatory
+        self.Syn_L4_exc_L3_exc = Synapses(self.L4_exc, self.L3_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)              
+        self.Syn_L4_exc_L3_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                               
+        self.num_Syn_L4_exc_L3_exc = len(self.Syn_L4_exc_L3_exc.x_pre)                                                                              
+        self.Syn_L4_exc_L3_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L4_exc_L3_exc)*ms   
+        
+        # Layer 3 excitatory to Layer 2 excitatory
+        self.Syn_L3_exc_L2_exc = Synapses(self.L3_exc, self.L2_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)              
+        self.Syn_L3_exc_L2_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                               
+        self.num_Syn_L3_exc_L2_exc = len(self.Syn_L3_exc_L2_exc.x_pre)                                                                              
+        self.Syn_L3_exc_L2_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_exc_L2_exc)*ms   
+        
+        # Layer 2 excitatory to Layer 1 excitatory
+        self.Syn_L2_exc_L1_exc = Synapses(self.L2_exc, self.L1_exc, STDP_ODEs, on_pre=STDP_presyn_update, on_post=STDP_postsyn_update)              
+        self.Syn_L2_exc_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_radius', p=p_conn)                               
+        self.num_Syn_L2_exc_L1_exc = len(self.Syn_L2_exc_L1_exc.x_pre)                                                                              
+        self.Syn_L2_exc_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_exc_L1_exc)*ms   
+        
     # internal function to generate Gabor filters to be applied to input image (called inside _gabor_filter)
     def _generate_gabor_filters(self):
         self.filters = []                                                                                                            # list to hold filters
@@ -215,13 +306,13 @@ class SpikingVisNet:
             # show image
             # fig, ax = plt.subplots(1,1)
             # ax.imshow(filtered)
-            # ax.set_title('Filter {}'.format(filt_idx+1))                                                                             # plot filtered images                               
+            # ax.set_title('Filter {}'.format(filt_idx+1))                                                                           # plot filtered images                               
             # plt.axis('off')
             # plt.show()
             filtered_image[:,:,filt_idx] = filtered                                                                                  # add filtered image to array
         self.filtered_images.append(filtered_image)
         flattened_filtered_image = np.ndarray.flatten(filtered_image)                                                                # flatten filtered images
-        self.L0.rate = flattened_filtered_image * 10e-8 * Hz                                                                     # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters
+        self.L0.rate = flattened_filtered_image * 10e-8 * Hz                                                                         # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters
         return filtered_image
     
     # =============================================================================
@@ -230,26 +321,43 @@ class SpikingVisNet:
 
     # function to print out summary of model architecture as a sanity check
     def model_summary(self):
-        print('Layers\n\n')
-        print(' layer | neurons | dimensions  | spacing (um) | filters\n')
-        print('------------------------------------------------------------\n')
-        print(' 0     | {}   | {}x{}x{} | {:.2f}        | {} \n'.format(self.L0.N,self.poisson_layer_width,self.poisson_layer_width,len(self.filters),self.poisson_neuron_spacing*10**6,len(self.filters)))
-        print(' 1     | {}     | {}x{}      | {:.2f}        | n/a\n'.format(self.L1.N,self.LIF_layer_width,self.LIF_layer_width,self.LIF_neuron_spacing*10**6))
-        print(' 2     | {}     | {}x{}      | {:.2f}        | n/a\n'.format(self.L2.N,self.LIF_layer_width,self.LIF_layer_width,self.LIF_neuron_spacing*10**6))
-        print(' 3     | {}     | {}x{}      | {:.2f}        | n/a\n'.format(self.L3.N,self.LIF_layer_width,self.LIF_layer_width,self.LIF_neuron_spacing*10**6))
-        print(' 4     | {}     | {}x{}      | {:.2f}        | n/a\n\n'.format(self.L4.N,self.LIF_layer_width,self.LIF_layer_width,self.LIF_neuron_spacing*10**6))
-        print('Connections\n\n')
+        print('Layers\n')
+        print(' layer | neurons | dimensions  | spacing (um)\n')
+        print('----------------------------------------------\n')
+        print(' 0      | {}   | {}x{}x{} | {:.2f}\n'.format(self.L0.N,self.poisson_layer_width,self.poisson_layer_width,len(self.filters),self.poisson_neuron_spacing*10**6,len(self.filters)))
+        print(' 1 exc. | {}     | {}x{}      | {:.2f} \n'.format(self.L1_exc.N,self.LIF_exc_layer_width,self.LIF_exc_layer_width,self.LIF_exc_neuron_spacing*10**6))
+        print(' 1 inh. | {}     | {}x{}      | {:.2f} \n'.format(self.L1_inh.N,self.LIF_inh_layer_width,self.LIF_inh_layer_width,self.LIF_inh_neuron_spacing*10**6))
+        print(' 2 exc. | {}     | {}x{}      | {:.2f}\n'.format(self.L2_exc.N,self.LIF_exc_layer_width,self.LIF_exc_layer_width,self.LIF_exc_neuron_spacing*10**6))
+        print(' 2 inh. | {}     | {}x{}      | {:.2f}\n'.format(self.L2_inh.N,self.LIF_inh_layer_width,self.LIF_inh_layer_width,self.LIF_inh_neuron_spacing*10**6))
+        print(' 3 exc. | {}     | {}x{}      | {:.2f}\n'.format(self.L3_exc.N,self.LIF_exc_layer_width,self.LIF_exc_layer_width,self.LIF_exc_neuron_spacing*10**6))
+        print(' 3 inh. | {}     | {}x{}      | {:.2f}\n'.format(self.L3_inh.N,self.LIF_inh_layer_width,self.LIF_inh_layer_width,self.LIF_inh_neuron_spacing*10**6))
+        print(' 4 exc. | {}     | {}x{}      | {:.2f}\n\n'.format(self.L4_exc.N,self.LIF_exc_layer_width,self.LIF_exc_layer_width,self.LIF_exc_neuron_spacing*10**6))
+        print(' 4 inh. | {}     | {}x{}      | {:.2f}\n\n'.format(self.L4_inh.N,self.LIF_inh_layer_width,self.LIF_inh_layer_width,self.LIF_inh_neuron_spacing*10**6))
+        print('Bottom-up connections\n')
         print(' source | target | connections\n')
         print('-------------------------------\n')
-        print(' 0      | 1      | {}\n'.format(self.num_Syn_L0_L1))
-        print(' 1      | 2      | {}\n'.format(self.num_Syn_L1_L2))
-        print(' 2      | 3      | {}\n'.format(self.num_Syn_L2_L3))
-        print(' 3      | 4      | {}\n'.format(self.num_Syn_L3_L4))
-    
-    # function to visualise model connectivity
-    def visualise_connectivity(self):
-        return 0
-    
+        print(' 0      | 1 exc. | {}\n'.format(self.num_Syn_L0_L1_exc))
+        print(' 1 exc. | 2 exc. | {}\n'.format(self.num_Syn_L1_exc_L2_exc))
+        print(' 2 exc. | 3 exc. | {}\n'.format(self.num_Syn_L2_exc_L3_exc))
+        print(' 3 exc. | 4 exc. | {}\n'.format(self.num_Syn_L3_exc_L4_exc))
+        print('Lateral connections\n')
+        print(' source | target | connections\n')
+        print('-------------------------------\n')
+        print(' 1 exc. | 1 inh. | {}\n'.format(self.num_Syn_L1_exc_L1_inh))
+        print(' 2 exc. | 2 inh. | {}\n'.format(self.num_Syn_L2_exc_L2_inh))
+        print(' 3 exc. | 3 inh. | {}\n'.format(self.num_Syn_L3_exc_L3_inh))
+        print(' 4 exc. | 4 inh. | {}\n'.format(self.num_Syn_L4_exc_L4_inh))
+        print(' 1 inh. | 1 exc. | {}\n'.format(self.num_Syn_L1_inh_L1_exc))
+        print(' 2 inh. | 2 exc. | {}\n'.format(self.num_Syn_L2_inh_L2_exc))
+        print(' 3 inh. | 3 exc. | {}\n'.format(self.num_Syn_L3_inh_L3_exc))
+        print(' 4 inh. | 4 exc. | {}\n'.format(self.num_Syn_L4_inh_L4_exc)) 
+        print('Top-down connections\n')
+        print(' source | target | connections\n')
+        print('-------------------------------\n')
+        print(' 4 exc. | 3 exc. | {}\n'.format(self.num_Syn_L4_exc_L3_exc))
+        print(' 3 exc. | 2 exc. | {}\n'.format(self.num_Syn_L3_exc_L2_exc))
+        print(' 2 exc. | 1 exc. | {}\n'.format(self.num_Syn_L2_exc_L1_exc)) 
+        
     # function to pass images into model - EVENTUALLY REPLACE WITH TRAIN AND TEST FUNCTIONS WHERE STDP IS ON AND OFF, RESPECITVELY
     def run_simulation(self, image, length):
         filtered_image = self._image_to_spikes(image,self.filters)
@@ -260,9 +368,12 @@ class SpikingVisNet:
                                             'poisson_layer_width': self.poisson_layer_width,
                                             'N_poisson': self.N_poisson,
                                             'poisson_neuron_spacing': self.poisson_neuron_spacing,
-                                            'LIF_layer_width': self.LIF_layer_width,                                                                                                         
-                                            'N_LIF': self.N_LIF,                                                                                                  
-                                            'LIF_neuron_spacing': self.LIF_neuron_spacing,
+                                            'LIF_exc_layer_width': self.LIF_exc_layer_width, 
+                                            'LIF_inh_layer_width': self.LIF_inh_layer_width,                                                                                                                                                                                                                 
+                                            'N_LIF_exc': self.N_LIF_exc,  
+                                            'N_LIF_inh': self.N_LIF_inh,                                                                                                                                                                                                  
+                                            'LIF_exc_neuron_spacing': self.LIF_exc_neuron_spacing,
+                                            'LIF_inh_neuron_spacing': self.LIF_inh_neuron_spacing,
                                             'taupre': self.taupre,
                                             'taupost': self.taupost,
                                             'wmax': self.wmax,

@@ -1,6 +1,6 @@
 # Spiking Neural Network Model of the Primate Ventral Visual System
 
-Developed in order to investigate the neural representation of object shape features in the ventral visual pathway, with specific emphasis on the emergence of feature binding neurons[^1] via polychronization[^2]. This model was developed using the Brian 2 simulator[^3].
+Developed in order to investigate the neural representation of object shape features in the ventral visual pathway, with specific emphasis on the emergence of feature binding neurons<sup>[1]</sup> via polychronization<sup>[2]</sup>. This model was developed using the Brian 2 simulator<sup>[3]</sup>.
 
 ## Files
 
@@ -15,12 +15,14 @@ The model architecture is illustrated below.
 
 ![diagram of model architecture](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/architecture.png)
 
-## Author
-Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz, Simon Stringer and Dan Goodman.
+## Developer
+Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.
 
+<sup>a</sup> <sub><sup>Department of Bioengineering, Imperial College London</sup></sub>
+<sup>b</sup> <sub><sup>Centre for Theoretical Neuroscience and Artificial Intelligence, University of Oxford</sup></sub>
+<sup>c</sup> <sub><sup>Department of Electrical and Electronic Engineering</sup></sub>
 ## References
 
-[^1]: [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)
-[^2]: [https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882](https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882)
-[^3]: [https://brian2.readthedocs.io/en/stable/index.html](https://brian2.readthedocs.io/en/stable/index.html)
-
+[1] [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)
+[2] [https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882](https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882)
+[3] [https://brian2.readthedocs.io/en/stable/index.html](https://brian2.readthedocs.io/en/stable/index.html)

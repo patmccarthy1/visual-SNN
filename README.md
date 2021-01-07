@@ -18,11 +18,11 @@ The model architecture is illustrated below.
 ## Developer
 Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.
 
-<sup>a</sup> <sub><sup>Department of Bioengineering, Imperial College London</sup></sub>
-<sup>b</sup> <sub><sup>Centre for Theoretical Neuroscience and Artificial Intelligence, University of Oxford</sup></sub>
-<sup>c</sup> <sub><sup>Department of Electrical and Electronic Engineering</sup></sub>
+<sup>a</sup> <sub>Department of Bioengineering, Imperial College London</sub>\
+<sup>b</sup> <sub>Centre for Theoretical Neuroscience and Artificial Intelligence, University of Oxford</sub>\
+<sup>c</sup> <sub>Department of Electrical and Electronic Engineering</sub>
 ## References
 
-[1] [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)
-[2] [https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882](https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882)
-[3] [https://brian2.readthedocs.io/en/stable/index.html](https://brian2.readthedocs.io/en/stable/index.html)
+[1] [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)\
+[2] [https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882](https://www.mitpressjournals.org/doi/pdfplus/10.1162/089976606775093882)\
+[3] [https://brian2.readthedocs.io/en/stable/index.html](https://brian2.readthedocs.io/en/stable/index.html)\

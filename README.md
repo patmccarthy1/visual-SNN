@@ -18,9 +18,9 @@ The model architecture is illustrated below.
 ## Developer
 Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.
 
-<sup>a</sup> <sub>Department of Bioengineering, Imperial College London</sub>\
+<sup>a</sup> <sub>Neural Coding and Neurodegenerative Disease Lab, Imperial College London</sub>\
 <sup>b</sup> <sub>Centre for Theoretical Neuroscience and Artificial Intelligence, University of Oxford</sub>\
-<sup>c</sup> <sub>Department of Electrical and Electronic Engineering</sub>
+<sup>c</sup> <sub>Neural Reckoning Lab, Imperial College London</sub>
 ## References
 
 [1] [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)\

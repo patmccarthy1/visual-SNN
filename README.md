@@ -13,7 +13,7 @@ The two most important files are:
 ## Model
 The model architecture is illustrated below.
 
-![diagram of model architecture](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/architecture.png)
+![diagram of model architecture](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/misc/architecture.png)
 
 ## Developer
 Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.

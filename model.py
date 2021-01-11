@@ -50,16 +50,16 @@ class SpikingVisNet:
         print('Building neurons')
         
         # Poisson neuron parameters
-        tau_m_poisson = 10 * ms # membrane time constant
-        poisson_layer_width = 256     
+        tau_m_poisson = 0.9* ms # membrane time constant
+        poisson_layer_width = 64     
         N_poisson = poisson_layer_width**2 # can change to np.sqrt(len(flattened_filtered_image)/len(self.filters)) to generalise to different image sizes
-        poisson_neuron_spacing = 12.5*umetre
+        poisson_neuron_spacing = 50*umetre
         v_th_poisson = -10*mV # threshold potential
         v_0_poisson = -70*mV # starting potential
         
         # Poisson neuron equations
         poisson_neurons = '''
-        dv/dt = -(v-v_0_poisson)/tau_m_poisson                                        : volt   # membrane potential
+        dv/dt = -(v-v_0_poisson)/tau_m_poisson                                        : volt (unless refractory)  # membrane potential
         x = (i%poisson_layer_width)*poisson_neuron_spacing                            : metre  # x position
         y = (int(i/poisson_layer_width))%poisson_layer_width*poisson_neuron_spacing   : metre  # y position
         f = int(i/N_poisson)                                                          : 1      # filter number
@@ -67,26 +67,28 @@ class SpikingVisNet:
         '''
         
         # LIF neuron parameters
-        tau_m_LIF = 10*ms # membrane time constant
-        tau_NMDA = 2*ms # excitatory synaptic time constant
-        tau_GABA = 25*ms # inhibitory synaptic time constant
+        tau_m_LIF = 1*ms # membrane time constant
+        tau_NMDA = 50*ms # excitatory synaptic time constant
+        tau_GABA = 100*ms # inhibitory synaptic time constant
         El = -70*mV
-        v_th_LIF = -55*mV
-        LIF_exc_layer_width = 64 # width of square Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
+        v_th_LIF = -30*mV
+        LIF_exc_layer_width = 32 # width of square Layers 1-4 in neurons, e.g. if 128 we will have 128^2 = 16384 neurons in a layer
         N_LIF_exc = LIF_exc_layer_width**2 # number of neurons in a layer
         LIF_exc_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_exc_layer_width) # required to assign spatial locations of neurons
-        LIF_inh_layer_width = 32                                                                                                    
+        LIF_inh_layer_width = 16                                                                                                    
         N_LIF_inh = LIF_inh_layer_width**2                                                                                                 
         LIF_inh_neuron_spacing = poisson_neuron_spacing*(poisson_layer_width/LIF_inh_layer_width)                                           
+        g_GABA = 10*mV
+        g_NMDA = 2*mV
         
         # LIF neuron equations (only difference between excitatory and inhibitory is spatial locations)
-        LIF_exc_neurons='''dv/dt=(g_NMDA+g_GABA+El-v)/tau_m_LIF    : volt   # membrane potential
-        dg_NMDA/dt=-g_NMDA/tau_NMDA                                : volt   # excitatory/NMDA conductance
+        LIF_exc_neurons='''dv/dt=-(g_NMDA+g_GABA+El-v)/tau_m_LIF   : volt (unless refractory) # membrane potential
+        dg_NMDA/dt=-g_NMDA/tau_NMDA                                : volt  # excitatory/NMDA conductance
         dg_GABA/dt=-g_GABA/tau_GABA                                : volt   # inhibitory/GABA conductance
         x = (i%LIF_exc_layer_width)*LIF_exc_neuron_spacing         : metre  # x position
         y = (int(i/LIF_exc_layer_width))*LIF_exc_neuron_spacing    : metre  # y position
         '''
-        LIF_inh_neurons='''dv/dt=(g_NMDA+g_GABA+El-v)/tau_m_LIF    : volt
+        LIF_inh_neurons='''dv/dt=-(g_NMDA+g_GABA+El-v)/tau_m_LIF    : volt (unless refractory)
         dg_NMDA/dt=-g_NMDA/tau_NMDA                                : volt
         dg_GABA/dt=-g_GABA/tau_GABA                                : volt
         x = (i%LIF_inh_layer_width)*LIF_inh_neuron_spacing         : metre  
@@ -96,23 +98,23 @@ class SpikingVisNet:
         # Layer 0  
         self.L0 = NeuronGroup(len(self.filters)*N_poisson, poisson_neurons, # create group of Poisson neurons for input layer
                               threshold='rand()*dt < rate*second**2', # multiply rate by second^2 for correct dimensions 
-                              reset='v = v_0_poisson', method='euler')
+                              reset='v = v_0_poisson', refractory=5*ms, method='euler')
 
         # Layer 1 
-        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler') # create group of excitatory LIF neurons                       
-        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler') # creatr group of inhibitory LIF neurons                            
+        self.L1_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler') # create group of excitatory LIF neurons                       
+        self.L1_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler') # creatr group of inhibitory LIF neurons                            
 
         # Layer 2 
-        self.L2_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler') 
-        self.L2_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler')
+        self.L2_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler') 
+        self.L2_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler')
 
         # Layer 3 
-        self.L3_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler')                         
-        self.L3_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler')
+        self.L3_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler')                         
+        self.L3_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler')
 
         # Layer 4 
-        self.L4_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler')                         
-        self.L4_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=2*ms, method='euler')
+        self.L4_exc = NeuronGroup(N_LIF_exc, LIF_exc_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler')                         
+        self.L4_inh = NeuronGroup(N_LIF_inh, LIF_inh_neurons, threshold='v > v_th_LIF', reset='v = El', refractory=0.5*ms, method='euler')
 
         # create class variable copies of variables (required for namespace access during simulation)
         self.v_th_poisson = v_th_poisson                                                                                                           
@@ -189,8 +191,8 @@ class SpikingVisNet:
         p_L1_inh_L1_exc = p_L2_inh_L2_exc = p_L3_inh_L3_exc = p_L4_inh_L4_exc = 0.15
         
         # parameters to enable Gaussian distributed axonal conduction delays
-        mean_delay = 0.01                                                                                                                    
-        SD_delay = 3                                                                                                                      
+        mean_delay = 0.5                                                                                                                   
+        SD_delay = 1                                                                                                                      
         
         # STDP parameters
         taupre = 5*ms
@@ -206,6 +208,8 @@ class SpikingVisNet:
         Apre = Apre*EPSC
         Apost = Apost*EPSC
         
+        w = 10*mV # initial synaptic weight
+        
         # STDP equations
         STDP_ODEs = '''
         # ODEs for trace learning rule
@@ -217,12 +221,12 @@ class SpikingVisNet:
         STDP_exc_presyn_update = '''
         g_NMDA+=w
         A_source += Apre
-        w = clip(w+A_target, 0, EPSC)
+        w = clip(w+A_target, 0*volt, EPSC)
         '''
         # update rule for postsynaptic spike for excitatory connections
         STDP_exc_postsyn_update = '''
         A_target += Apost
-        w = clip(w+A_source, 0, EPSC)
+        w = clip(w+A_source, 0*volt, EPSC)
         '''
         # update rule for postsynaptic spike for inhibitory connections
         STDP_inh_postsyn_update = '''
@@ -321,19 +325,19 @@ class SpikingVisNet:
             
         # Layer 4 excitatory to Layer 3 excitatory
         self.Syn_L4_exc_L3_exc = Synapses(self.L4_exc, self.L3_exc, STDP_ODEs, on_pre=STDP_exc_presyn_update, on_post=STDP_exc_postsyn_update)              
-        self.Syn_L4_exc_L3_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L4_L3', p=p_L4_exc_L3_exc)                               
+        self.Syn_L4_exc_L3_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L4_L3', p=p_L4_L3)                               
         self.num_Syn_L4_exc_L3_exc = len(self.Syn_L4_exc_L3_exc.x_pre)                                                                              
         self.Syn_L4_exc_L3_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L4_exc_L3_exc)*ms   
         
         # Layer 3 excitatory to Layer 2 excitatory
         self.Syn_L3_exc_L2_exc = Synapses(self.L3_exc, self.L2_exc, STDP_ODEs, on_pre=STDP_exc_presyn_update, on_post=STDP_exc_postsyn_update)              
-        self.Syn_L3_exc_L2_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L3_L2', p=p_L3_exc_L2_exc)                               
+        self.Syn_L3_exc_L2_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L3_L2', p=p_L3_L2)                               
         self.num_Syn_L3_exc_L2_exc = len(self.Syn_L3_exc_L2_exc.x_pre)                                                                              
         self.Syn_L3_exc_L2_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L3_exc_L2_exc)*ms   
         
         # Layer 2 excitatory to Layer 1 excitatory
         self.Syn_L2_exc_L1_exc = Synapses(self.L2_exc, self.L1_exc, STDP_ODEs, on_pre=STDP_exc_presyn_update, on_post=STDP_exc_postsyn_update)              
-        self.Syn_L2_exc_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L2_L1', p=p_L2_exc_L1_exc)                               
+        self.Syn_L2_exc_L1_exc.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L2_L1', p=p_L2_L1)                               
         self.num_Syn_L2_exc_L1_exc = len(self.Syn_L2_exc_L1_exc.x_pre)                                                                              
         self.Syn_L2_exc_L1_exc.delay = np.random.normal(mean_delay, SD_delay, self.num_Syn_L2_exc_L1_exc)*ms   
         
@@ -348,9 +352,9 @@ class SpikingVisNet:
     # internal function to generate Gabor filters to be applied to input image (called inside _gabor_filter)
     def _generate_gabor_filters(self):
         self.filters = []                                                                                                            
-        ksize = 5 # kernel size
+        ksize = 4 # kernel size
         phi_list = [0, np.pi/2, np.pi] # phase offset of sinusoid 
-        lamda = 2 # wavelength of sinusoid 
+        lamda = 5 # wavelength of sinusoid 
         theta_list = [0,np.pi/4, np.pi/2, 3*np.pi/4] # filter orientation
         b = 1.5 # spatial bandwidth in octaves (will be used to determine SD)
         sigma = lamda*(2**b+1)/np.pi*(2**b-1) * np.sqrt(np.log(2)/2)
@@ -375,7 +379,7 @@ class SpikingVisNet:
             filtered_image[:,:,filt_idx] = filtered # add filtered image to array
         self.filtered_images.append(filtered_image)
         flattened_filtered_image = np.ndarray.flatten(filtered_image) # flatten filtered images
-        self.L0.rate = flattened_filtered_image * 10/255 * Hz # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters - multiply by a coefficient (10e-8) to get biologically realistic values
+        self.L0.rate = flattened_filtered_image * 1/255000 * Hz # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters - multiply by a coefficient (10e-8) to get biologically realistic values
         return filtered_image
     
     # =============================================================================

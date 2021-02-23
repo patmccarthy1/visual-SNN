@@ -110,7 +110,7 @@ start_scope()
 
 
 # save initial weights to CSV
-weights_to_csv("output_data/layer_0_layer_1_exc_weights_0s",visnet.Syn_L0_L1_exc)
+weights_to_csv_poisson("output_data/layer_0_layer_1_exc_weights_0s",visnet.Syn_L0_L1_exc)
 weights_to_csv("output_data/layer_1_exc_layer_1_exc_weights_0s",visnet.Syn_L1_exc_L1_inh)
 weights_to_csv("output_data/layer_1_exc_layer_1_inh_weights_0s",visnet.Syn_L1_exc_L1_inh)
 weights_to_csv("output_data/layer_1_inh_layer_1_exc_weights_0s",visnet.Syn_L1_inh_L1_exc)
@@ -146,7 +146,7 @@ for idx, im in enumerate(ims):
     for i in range(5):
         time = (i+1)*0.2
         visnet.run_simulation(im,0.2*second)
-        weights_to_csv("output_data/layer_0_layer_1_exc_weights_im{}_{}s".format(idx,time),visnet.Syn_L0_L1_exc)
+        weights_to_csv_poisson("output_data/layer_0_layer_1_exc_weights_im{}_{}s".format(idx,time),visnet.Syn_L0_L1_exc)
         weights_to_csv("output_data/layer_1_exc_layer_2_exc_weights_im{}_{}s".format(idx,time),visnet.Syn_L1_exc_L2_exc)
         weights_to_csv("output_data/layer_2_exc_layer_3_exc_weights_im{}_{}s".format(idx,time),visnet.Syn_L2_exc_L3_exc)
         weights_to_csv("output_data/layer_3_exc_layer_4_exc_weights_im{}_{}s".format(idx,time),visnet.Syn_L3_exc_L4_exc)

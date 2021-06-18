@@ -15,10 +15,10 @@ def read_images(img_dir):
 
 def generate_gabor_filters():
      filters = []                                                                                                            
-     ksize = 10 # kernel size
-     phi_list = [0, np.pi/2, 3*np.pi/4, np.pi] # phase offset of sinusoid 
-     lamda = 5 # wavelength of sinusoid 
-     theta_list = [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi, 3*np.pi/2] # filter orientation
+     ksize = 11 # kernel size
+     phi_list = [np.pi/2, np.pi] # phase offset of sinusoid 
+     lamda = 5.2 # wavelength of sinusoid 
+     theta_list = [0,np.pi/4, np.pi/2, 3*np.pi/4, np.pi] # filter orientation
      b = 1.1 # spatial bandwidth in octaves (will be used to determine SD)
      sigma = lamda*(2**b+1)/np.pi*(2**b-1) * np.sqrt(np.log(2)/2)
      gamma = 0.5 # filter aspect ratio
@@ -30,7 +30,7 @@ def generate_gabor_filters():
     
 filters = generate_gabor_filters()
 
-ims = read_images('../input_data/n3p2')
+ims = read_images('../input_data/n4p2_resized')
 im = ims[0]
 
 filtered = []
@@ -39,18 +39,18 @@ for filt in filters:
     filtered.append(cv2.filter2D(im, cv2.CV_8UC3, filt)) # apply filter
 
 # create plot of filtered images
-fig = plt.figure(figsize=[6,4])
-fig.subplots_adjust(hspace = .1, wspace=.1)
+fig = plt.figure(figsize=[5,2])
+fig.subplots_adjust(hspace=.1, wspace=.1)
 for idx in range(len(filtered)):
-    ax = fig.add_subplot(4, 6, idx+1) # this line adds sub-axes
-    filtim = ax.imshow(filtered[idx],cmap='gray') # this line creates the image using the pre-defined sub axes
+    ax = fig.add_subplot(2, 5, idx+1) # this line adds sub-axes
+    filtim = ax.imshow(filtered[idx],cmap='hot') # this line creates the image using the pre-defined sub axes
     ax.set_title(str(idx+1), y=1, x=.15,pad=-10,color='white',fontsize=8)
     ax.get_xaxis().set_ticks([])
     ax.get_yaxis().set_ticks([])
 fig.subplots_adjust(right=0.8)
-cbar_ax1 = fig.add_axes([0.83, 0.15, 0.025, 0.71])
+cbar_ax1 = fig.add_axes([0.82, 0.15, 0.0225, 0.71])
 fig.colorbar(filtim, cax=cbar_ax1)
-# plt.savefig('filtered_images.eps', dpi=500)
+plt.savefig('filtered_images.eps', dpi=500)
 
 # create plot of original image
 fig2 = plt.figure(figsize=[7,5])
@@ -58,6 +58,6 @@ ax2 = fig2.add_subplot(1, 1, 1) # this line adds sub-axes
 im = ax2.imshow(im,cmap='gray', vmin=0, vmax=255) # this line creates the image using the pre-defined sub axes
 ax2.get_xaxis().set_ticks([])
 ax2.get_yaxis().set_ticks([])
-cbar_ax2 = fig2.add_axes([0.8, 0.15, 0.05, 0.71])
-fig2.colorbar(im, cax=cbar_ax2)
-# plt.savefig('original_image.eps', dpi=500)
+# cbar_ax2 = fig2.add_axes([0.8, 0.15, 0.05, 0.71])
+# fig2.colorbar(im, cax=cbar_ax2)
+plt.savefig('original_image.eps', dpi=500)

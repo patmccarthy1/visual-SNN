@@ -2,7 +2,7 @@
 
 Biologically realistic model of a network of neurons in the primate ventral visual pathway. This was developed to investigate the emergence of feature selectivity for forming representations of shape, and to test a newly proposed solution to feature binding: hierarchical binding by polychronization <sup>[1,2]</sup>.
 
-## Model Features and Architecture
+## Model Architecture
 
 Images are processed by a Gabor filter set, and pixel values of the filtered images determine the mean firing rate of Poisson neurons, acting as an input layer. The rest of the model consists of 4 layers of conductance-based LIF neurons, containing excitatory and inhibitory neurons in a 4:1 ratio. Neurons are connected in a topologically corresponding manner to facilitate the development of retinotopic maps. Neurons are connected with feedforward, feedback, recurrent and lateral (inhibitory) conductance-based synapses. Conduction delays between neurons are Gaussian distributed, and an STDP learning rule is implemented in synapses between excitatory LIF neurons, encouraging the emergence of polychronous neuronal groups. 
 

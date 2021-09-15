@@ -26,6 +26,7 @@ After installing the dependencies mentioned above, clone this Git repository to 
 
 * [model.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/model.py) - defines model architecture and includes functions present images to model
 * [simulation.ipynb](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py) - used to run simulations and plot live results
+* [simulation.sh](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.sh) - used to run simulations without Notebooks (more efficient) 
 * [analysis](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/analysis) - contains a range of MATLAB scripts to perform data analysis and create plots
 
 Upon opening the Jupyter Notebook file [simulation.ipynb](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py), you will be able to run cells to import the model class 'SpikingVisNet' from [model.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/model.py), create a new model, 

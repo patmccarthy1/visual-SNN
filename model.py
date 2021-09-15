@@ -577,6 +577,7 @@ class SpikingVisNet:
         self.rho = learning_rate
         
     # function to print out summary of model architecture as a sanity check
+    # update this 
     def model_summary(self):
         print('\nSUMMARY\n')
         print(' layer  | neurons  | dimensions  | spacing (um)')

@@ -1,3 +1,12 @@
+# =============================================================================
+# Spiking Neural Network Model of the Primate Ventral Visual System
+# -----------------------------------------------------------------------------
+# This file defines the model architecture, which is instantiated to run
+# simulations in the complementary file 'simulation.py'.
+# -----------------------------------------------------------------------------
+# Patrick McCarthy, Imperial College London, 2021
+# =============================================================================
+
 #!/usr/bin/env python
 
 from brian2 import *

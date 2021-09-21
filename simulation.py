@@ -1,4 +1,11 @@
-# Python script to run simulations on spiking model of primate ventral visual system
+# =============================================================================
+# Spiking Neural Network Model of the Primate Ventral Visual System
+# -----------------------------------------------------------------------------
+# This script runs a simulation by instantiating the model defined in 'model.py'
+# and presenting a series of images. 
+# -----------------------------------------------------------------------------
+# Patrick McCarthy, Imperial College London, 2021
+# =============================================================================
 
 # import packages
 import numpy as np

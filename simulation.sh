@@ -9,4 +9,3 @@ mkdir output_data
 mv $HOME/input_data $WORK/$PBS_JOBID
 python $HOME/simulation.py 
 mv * $WORK/$PBS_JOBID
-

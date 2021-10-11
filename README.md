@@ -16,7 +16,7 @@ The model architecture is illustrated below.
 
 * Python v3.7.7
 * MATLAB R2021a
-* Brian 2 v2.3.0.2
+* Brian v2.3.0.2
 * NumPy v1.19.1
 * SciPy v1.6.2
 * OpenCV v3.4.2

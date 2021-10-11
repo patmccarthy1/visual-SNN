@@ -27,16 +27,18 @@ The model architecture is illustrated below.
 After installing the dependencies mentioned above, clone this Git repository to your local drive. The most important files and folders are:
 
 * [model.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/model.py) - defines model architecture and includes functions present images to model
-* [simulation.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py) - defines simulation specifications
-* [simulation.sh](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.sh) - used to run simulations 
+* [simulation.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py) - defines simulation specifications and runs simulation
+* [simulation.sh](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.sh) - calls simulation.py script to run simulation through SSH terminal
 * [analysis](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/analysis) - contains a number of MATLAB scripts and Python notebooks to perform data analysis and plotting
+
+This code was designed to be ran remotely on a high-powered computing cluster via an SSH connection.
 
 ## Development
 Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.
 
-<sup>a</sup> <sub>Neural Coding Lab, Imperial College London</sub>\
+<sup>a</sup> <sub>Department of Bioengineering, Imperial College London</sub>\
 <sup>b</sup> <sub>Centre for Theoretical Neuroscience and Artificial Intelligence, University of Oxford</sub>\
-<sup>c</sup> <sub>Neural Reckoning Lab, Imperial College London</sub>
+<sup>c</sup> <sub>Department of Electrical and Electronic Engineering , Imperial College London</sub>
 ## References
 
 [1] [https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf](https://www.oftnai.org/articles/Brain_modelling_articles/Publications/Vision/2018-25960-001.pdf)\

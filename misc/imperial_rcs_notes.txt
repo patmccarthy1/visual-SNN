@@ -1,0 +1,27 @@
+RUNNING AND SUBMITTING A JOB ON IMPERIAL RCS
+
+1. connect to VPN
+
+2. connect to the RCS and activate environment
+ssh -XY USERNAME@login.hpc.ic.ac.uk
+source ENV_NAME/bin/activate
+
+3. create job script in following format
+#PBS -lwalltime=HH:MM:00
+#PBS -lselect=1:ncpus=N:mem=Mgb
+module load anaconda3/personal
+python $HOME/myprog.py $PBS_O_WORKDIR/path/to/input.txt
+mkdir $WORK/$PBS_JOBID
+cp * $WORK/$PBS_JOBID
+
+4. submit and monitor job
+qsub JOBdirID.sh 
+qstat 
+
+any shell output will be saved to a text file named after the jobID created after the shell script is submitted, and output files will be saved within the .pbs file corresponding to the job
+
+to open and edit a  file use the nano command line text editor:
+nano filename.extension
+
+job size guidelines
+https://www.imperial.ac.uk/admin-services/ict/self-service/research-support/rcs/computing/job-sizing-guidance/high-throughput/

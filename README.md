@@ -8,7 +8,9 @@ Images are processed by a Gabor filter set, and pixel values of the filtered ima
 
 The model architecture is illustrated below.
 
+<p align="center">
 <img src="https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/misc/architecture.png" data-canonical-src="https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/misc/architecture.png" height="800" />
+</p>
 
 ## Requirements
 

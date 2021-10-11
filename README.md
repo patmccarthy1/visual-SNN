@@ -27,12 +27,9 @@ The model architecture is illustrated below.
 After installing the dependencies mentioned above, clone this Git repository to your local drive. The most important files and folders are:
 
 * [model.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/model.py) - defines model architecture and includes functions present images to model
-* [simulation.ipynb](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py) - used to run simulations and plot live results
-* [simulation.sh](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.sh) - used to run simulations without Notebooks (more efficient) 
+* [simulation.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py) - defines simulation specifications
+* [simulation.sh](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.sh) - used to run simulations 
 * [analysis](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/analysis) - contains a number of MATLAB scripts and Python notebooks to perform data analysis and plotting
-
-Upon opening the Jupyter Notebook file [simulation.ipynb](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/simulation.py), you will be able to run cells to import the model class 'SpikingVisNet' from [model.py](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/model.py), create a new model, 
-import image data to present from [input_data](https://github.com/patmccarthy1/spiking-PVVS-model/blob/master/input_data) and run simulations. The Jupyter Notebook environment is used so that results can be plotted in real-time, and the model can be used by somebody with minimal coding ability. Access to a high number of CPU cores and ideally GPU boosting will be required.
 
 ## Development
 Developed by Patrick McCarthy at Imperial College London, 2021 under the supervision of Simon Schultz<sup>a</sup>, Simon Stringer<sup>b</sup> and Dan Goodman<sup>c</sup>.

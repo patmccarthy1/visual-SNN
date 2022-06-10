@@ -1,11 +1,10 @@
-#PBS -lwalltime=72:00:00
+#PBS -lwalltime=48:00:00
 #PBS -lselect=1:ncpus=8:mem=96gb
 module load anaconda3/personal
-conda install brian2
-conda install -c anaconda opencv 
-conda install matplotlib
 mkdir $WORK/$PBS_JOBID
+mkdir input_data
 mkdir output_data
-mv $HOME/input_data $WORK/$PBS_JOBID
-python $HOME/simulation.py 
+mv $HOME/input_data/* input_data
+python3 $HOME/simulation.py 
 mv * $WORK/$PBS_JOBID
+

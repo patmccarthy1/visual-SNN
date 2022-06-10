@@ -72,8 +72,8 @@ class SpikingVisNet:
         poisson_neuron_spacing = 12.5*umetre    # spacing between neurons
         N_filters = len(self.filters)           # number of filters
         N_poisson_total = N_poisson * N_filters # total number of Poisson neurons for all filters
-        x_poisson = [(i%poisson_layer_width)*poisson_neuron_spacing for i in range(N_poisson_total)]                       
-        y_poisson = [(int(i/poisson_layer_width))%poisson_layer_width*poisson_neuron_spacing for i in range(N_poisson_total)]
+        x_poisson = [(i%poisson_layer_width) * poisson_neuron_spacing for i in range(N_poisson_total)]                       
+        y_poisson = [(int(i/poisson_layer_width)) % poisson_layer_width * poisson_neuron_spacing for i in range(N_poisson_total)]
         filt_num = [int(i/N_poisson) for i in range(N_poisson_total)]       
             
         # LIF neuron parameters
@@ -91,10 +91,10 @@ class SpikingVisNet:
         g_l = 25*nS            # leak conductance
         E_e = -20*mV           # excitatory synaptic reversal potential
         E_i = -90*mV           # inhibitory synaptic reversal potential
-        C_m = 0.214*nF         # membrane capacitance
+        C_m = 0.5*nF         # membrane capacitance
         tau_e = 1.5*ms         # excitatory synaptic time constant
         tau_i = 5*ms           # inhibitory synaptic time constant
-        tau_r = 15*ms           # refractory period
+        tau_r = 15*ms          # refractory period
         V_th = -40*mV          # firing threshold
         V_r = -58*mV           # reset potential
         
@@ -137,7 +137,7 @@ class SpikingVisNet:
         # Layer 0  
         print('Layer 0 (Poisson)')
         self.L0 = NeuronGroup(N_poisson_total, poisson_neurons, # create group of Poisson neurons for input layer
-                              threshold='rand() < rate*dt', # multiply rate by second^2 for correct dimensions 
+                              threshold='rand() < rate * dt', # multiply rate by second^2 for correct dimensions 
                               method='euler')
         self.L0.x = x_poisson
         self.L0.y = y_poisson
@@ -150,12 +150,12 @@ class SpikingVisNet:
         self.L1_exc = self.L1[:N_LIF_exc]      # create variable for excitatory neurons
         self.L1_exc.C = 'rand()/2'
         self.L1_exc.D = 'rand()/2'
-        self.L1_exc.g_e = 'rand()*g_init'        # random initial excitatory conductances
-        self.L1_exc.g_i = 'rand()*g_init'        # random initial inhibitory conductances
+        self.L1_exc.g_e = 'rand()*g_init'      # random initial excitatory conductances
+        self.L1_exc.g_i = 'rand()*g_init'      # random initial inhibitory conductances
         self.L1_exc.x = x_exc                  # excitatory neurons x locations
         self.L1_exc.y = y_exc                  # excitatory neurons y locations
         self.L1_inh = self.L1[N_LIF_exc:]      # create variable for inhibitory neurons
-        self.L1_inh.g_e = 'rand()*g_init'        # random initial excitatory conductances
+        self.L1_inh.g_e = 'rand()*g_init'      # random initial excitatory conductances
         self.L1_inh.g_i = '0*siemens'          # inhibitory conductance is zero for inhibitory neurons (only neurons in excitatory layers are capable of being inhibited)
         self.L1_inh.x = x_inh                  # inhibitory neurons x locations
         self.L1_inh.y = y_inh                  # inhibitory neurons y locations
@@ -167,12 +167,12 @@ class SpikingVisNet:
         self.L2_exc = self.L2[:N_LIF_exc]      # create variable for excitatory neurons
         self.L2_exc.C = 'rand()/2'
         self.L2_exc.D = 'rand()/2'
-        self.L2_exc.g_e = 'rand()*g_init'        # random initial excitatory conductances
-        self.L2_exc.g_i = 'rand()*g_init'        # random initial inhibitory conductances
+        self.L2_exc.g_e = 'rand()*g_init'      # random initial excitatory conductances
+        self.L2_exc.g_i = 'rand()*g_init'      # random initial inhibitory conductances
         self.L2_exc.x = x_exc                  # excitatory neurons x locations
         self.L2_exc.y = y_exc                  # excitatory neurons y locations
         self.L2_inh = self.L2[N_LIF_exc:]      # create variable for inhibitory neurons
-        self.L2_inh.g_e = 'rand()*g_init'        # random initial excitatory conductances
+        self.L2_inh.g_e = 'rand()*g_init'      # random initial excitatory conductances
         self.L2_inh.g_i = '0*siemens'          # inhibitory conductance is zero for inhibitory neurons (only neurons in excitatory layers are capable of being inhibited)
         self.L2_inh.x = x_inh                  # inhibitory neurons x locations
         self.L2_inh.y = y_inh                  # inhibitory neurons y locations
@@ -184,12 +184,12 @@ class SpikingVisNet:
         self.L3_exc = self.L3[:N_LIF_exc]      # create variable for excitatory neurons
         self.L3_exc.C = 'rand()/2'
         self.L3_exc.D = 'rand()/2'
-        self.L3_exc.g_e = 'rand()*g_init'        # random initial excitatory conductances
-        self.L3_exc.g_i = 'rand()*g_init'        # random initial inhibitory conductances
+        self.L3_exc.g_e = 'rand()*g_init'      # random initial excitatory conductances
+        self.L3_exc.g_i = 'rand()*g_init'      # random initial inhibitory conductances
         self.L3_exc.x = x_exc                  # excitatory neurons x locations
         self.L3_exc.y = y_exc                  # excitatory neurons y locations
         self.L3_inh = self.L3[N_LIF_exc:]      # create variable for inhibitory neurons
-        self.L3_inh.g_e = 'rand()*g_init'        # random initial excitatory conductances
+        self.L3_inh.g_e = 'rand()*g_init'      # random initial excitatory conductances
         self.L3_inh.g_i = '0*siemens'          # inhibitory conductance is zero for inhibitory neurons (only neurons in excitatory layers are capable of being inhibited)
         self.L3_inh.x = x_inh                  # inhibitory neurons x locations
         self.L3_inh.y = y_inh                  # inhibitory neurons y locations
@@ -201,12 +201,12 @@ class SpikingVisNet:
         self.L4_exc = self.L4[:N_LIF_exc]      # create variable for excitatory neurons
         self.L4_exc.C = 'rand()/2'
         self.L4_exc.D = 'rand()/2'
-        self.L4_exc.g_e = 'rand()*g_init'        # random initial excitatory conductances
-        self.L4_exc.g_i = 'rand()*g_init'        # random initial inhibitory conductances
+        self.L4_exc.g_e = 'rand()*g_init'      # random initial excitatory conductances
+        self.L4_exc.g_i = 'rand()*g_init'      # random initial inhibitory conductances
         self.L4_exc.x = x_exc                  # excitatory neurons x locations
         self.L4_exc.y = y_exc                  # excitatory neurons y locations
         self.L4_inh = self.L4[N_LIF_exc:]      # create variable for inhibitory neurons
-        self.L4_inh.g_e = 'rand()*g_init'        # random initial excitatory conductances
+        self.L4_inh.g_e = 'rand()*g_init'      # random initial excitatory conductances
         self.L4_inh.g_i = '0*siemens'          # inhibitory conductance is zero for inhibitory neurons (only neurons in excitatory layers are capable of being inhibited)
         self.L4_inh.x = x_inh                  # inhibitory neurons x locations
         self.L4_inh.y = y_inh                  # inhibitory neurons y locations
@@ -281,30 +281,30 @@ class SpikingVisNet:
         fan_in_L1_exc_L1_exc = fan_in_L2_exc_L2_exc = fan_in_L3_exc_L3_exc = fan_in_L4_exc_L4_exc = 1 * LIF_inh_neuron_spacing
 
         # connection probabilities
-        p_L0_L1 = 1
-        p_L1_L2 = 0.5
-        p_L2_L3 = 0.25
-        p_L3_L4 = 0.1
-        p_L4_L3 = p_L3_L2 = p_L2_L1 = 0.01
-        p_L1_exc_L1_inh = p_L2_exc_L2_inh = p_L3_exc_L3_inh = p_L4_exc_L4_inh = 1
+        p_L0_L1 = 0.9
+        p_L1_L2 = 0.1
+        p_L2_L3 = 0.05
+        p_L3_L4 = 0.01
+        p_L4_L3 = p_L3_L2 = p_L2_L1 = 0.005
+        p_L1_exc_L1_inh = p_L2_exc_L2_inh = p_L3_exc_L3_inh = p_L4_exc_L4_inh = 0.95
         p_L1_inh_L1_exc = p_L2_inh_L2_exc = p_L3_inh_L3_exc = p_L4_inh_L4_exc = 0.5
-        p_L1_exc_L1_exc = p_L2_exc_L2_exc = p_L3_exc_L3_exc = p_L4_exc_L4_exc = 0.3
+        p_L1_exc_L1_exc = p_L2_exc_L2_exc = p_L3_exc_L3_exc = p_L4_exc_L4_exc = 0.05
+        
         
         # parameters to enable Gaussian distributed axonal conduction delays
-        mean_delay = 20 # mean delay
+        mean_delay = 25 # mean delay
         sd_delay = 10   # standard deviation of delays
-        #         low_delay = 1000  # lower bound on delays
-        #         upp_delay = 2000  # upper bound on delays
         
         # synaptic parameters
-        rho = 0.01     # synaptic learning rate
-        tau_w = 5*ms   # time constant for ODE describing synaptic weight
-        eta_exc = 0.04 # scaling factor for increase in synaptic conductance upon spike
-        eta_inh = 0.06 # scaling factor for increase in synaptic conductance upon spike
-        alpha_C = 0.1  # synaptic glutamate concentration scaling constant
-        alpha_D = 0.1  # proportion of unblocked NMDA receptors scaling constant
-        w_init = 20*nS # max initial weight
-        w_max = 100*nS # max weight
+        rho = 100e-6      # synaptic learning rate
+        tau_w = 5*ms      # time constant for ODE describing synaptic weight
+        eta_exc = 0.02    # scaling factor for increase in synaptic conductance upon spike
+        eta_inh = 0.1     # scaling factor for increase in synaptic conductance upon spike
+        alpha_C = 0.08    # synaptic glutamate concentration scaling constant
+        alpha_D = 0.08    # proportion of unblocked NMDA receptors scaling constant
+        w_init = 20 * nS  # max initial weight
+        w_init_inh = 50 * nS  # max initial weight
+        w_max = 100 * nS  # max weight
         
         # =============================================================================
         # definitions       
@@ -390,7 +390,7 @@ class SpikingVisNet:
         self.Syn_L1_exc_L1_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L1_exc_L1_inh',p=p_L1_exc_L1_inh)                               
         self.num_Syn_L1_exc_L1_inh = self.Syn_L1_exc_L1_inh.N                                                                              
         self.Syn_L1_exc_L1_inh.delay = 'sd_delay*randn()*ms + mean_delay*ms' #truncnorm.rvs(low_delay, upp_delay, size=self.num_Syn_L1_exc_L1_inh)*ms 
-        self.Syn_L1_exc_L1_inh.w = 'rand() * 10 * w_init'
+        self.Syn_L1_exc_L1_inh.w = 'rand() * 10 * w_init_inh'
         self.affs_per_neuron_Syn_L1_exc_L1_inh = self.Syn_L1_exc_L1_inh.N_incoming_post
         
         # Layer 1 inhibitory to Layer 1 excitatory 
@@ -408,7 +408,7 @@ class SpikingVisNet:
         self.Syn_L2_exc_L2_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L2_exc_L2_inh',p=p_L2_exc_L2_inh)                               
         self.num_Syn_L2_exc_L2_inh = self.Syn_L2_exc_L2_inh.N                                                                               
         self.Syn_L2_exc_L2_inh.delay = 'sd_delay*randn()*ms + mean_delay*ms' #truncnorm.rvs(low_delay, upp_delay, size=self.num_Syn_L2_exc_L2_inh)*ms 
-        self.Syn_L2_exc_L2_inh.w = 'rand() * 10 * w_init'
+        self.Syn_L2_exc_L2_inh.w = 'rand() * 10 * w_init_inh'
         self.affs_per_neuron_Syn_L2_exc_L2_inh = self.Syn_L2_exc_L2_inh.N_incoming_post
 
         # Layer 2 inhibitory to Layer 2 excitatory
@@ -426,7 +426,7 @@ class SpikingVisNet:
         self.Syn_L3_exc_L3_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L3_exc_L3_inh',p=p_L3_exc_L3_inh)                               
         self.num_Syn_L3_exc_L3_inh = self.Syn_L3_exc_L3_inh.N                                                                              
         self.Syn_L3_exc_L3_inh.delay = 'sd_delay*randn()*ms + mean_delay*ms' #truncnorm.rvs(low_delay, upp_delay, size=self.num_Syn_L3_exc_L3_inh)*ms 
-        self.Syn_L3_exc_L3_inh.w = 'rand() * 10 * w_init'
+        self.Syn_L3_exc_L3_inh.w = 'rand() * 10 * w_init_inh'
         self.affs_per_neuron_Syn_L3_exc_L3_inh = self.Syn_L3_exc_L3_inh.N_incoming_post
 
         # Layer 3 inhibitory to Layer 3 excitatory
@@ -444,7 +444,7 @@ class SpikingVisNet:
         self.Syn_L4_exc_L4_inh.connect('sqrt((x_pre-x_post)**2+(y_pre-y_post)**2) < fan_in_L4_exc_L4_inh',p=p_L4_exc_L4_inh)                               
         self.num_Syn_L4_exc_L4_inh = self.Syn_L4_exc_L4_inh.N                                                                               
         self.Syn_L4_exc_L4_inh.delay = 'sd_delay*randn()*ms + mean_delay*ms' #truncnorm.rvs(low_delay, upp_delay, size=self.num_Syn_L4_exc_L4_inh)*ms 
-        self.Syn_L4_exc_L4_inh.w = 'rand() * 10 * w_init'
+        self.Syn_L4_exc_L4_inh.w = 'rand() * 10 * w_init_inh'
         self.affs_per_neuron_Syn_L4_exc_L4_inh = self.Syn_L4_exc_L4_inh.N_incoming_post
 
         # Layer 4 inhibitory to Layer 4 excitatory
@@ -538,9 +538,6 @@ class SpikingVisNet:
         self.w_max = w_max 
         self.mean_delay = mean_delay
         self.sd_delay = sd_delay
-#         self.upp_delay = upp_delay
-#         self.low_delay = low_delay
-        
         
     # internal function to generate Gabor filters to be applied to input image (called inside _gabor_filter)
     def _generate_gabor_filters(self):
@@ -572,7 +569,7 @@ class SpikingVisNet:
             filtered_image[:,:,filt_idx] = filtered # add filtered image to array
         self.filtered_images.append(filtered_image)
         flattened_filtered_image = np.ndarray.flatten(filtered_image) # flatten filtered images
-        self.L0.rate = flattened_filtered_image * 1/4000 * Hz # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters - multiply by a coefficient (10e-8) to get biologically realistic values
+        self.L0.rate = flattened_filtered_image * 1/650 * Hz # set firing rates of L0 Poisson neurons equal to outputs of Gabor filters 
         return filtered_image
     
     # =============================================================================
@@ -603,34 +600,34 @@ class SpikingVisNet:
         print('Feedforward connections')
         print(' source | target | total conn\'s | aff\'s per neuron')
         print('----------------------------------------------------')
-        print(' 0      | 1 exc. | {}       | {}'.format(self.num_Syn_L0_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L0_L1_exc),2)))
-        print(' 1 exc. | 2 exc. | {}        | {}'.format(self.num_Syn_L1_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L2_exc),2)))
-        print(' 2 exc. | 3 exc. | {}       | {}'.format(self.num_Syn_L2_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L3_exc),2)))
-        print(' 3 exc. | 4 exc. | {}        | {}\n'.format(self.num_Syn_L3_exc_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L4_exc),2)))
+        print(' 0      | 1 exc. | {} | {}'.format(self.num_Syn_L0_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L0_L1_exc),2)))
+        print(' 1 exc. | 2 exc. | {} | {}'.format(self.num_Syn_L1_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L2_exc),2)))
+        print(' 2 exc. | 3 exc. | {} | {}'.format(self.num_Syn_L2_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L3_exc),2)))
+        print(' 3 exc. | 4 exc. | {} | {}\n'.format(self.num_Syn_L3_exc_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L4_exc),2)))
         print('Lateral connections')
         print(' source | target | total conn\'s | aff\'s per neuron')
         print('----------------------------------------------------')
-        print(' 1 exc. | 1 inh. | {}        | {}'.format(self.num_Syn_L1_exc_L1_inh[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L1_inh),2)))
-        print(' 2 exc. | 2 inh. | {}        | {}'.format(self.num_Syn_L2_exc_L2_inh[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L2_inh),2)))
-        print(' 3 exc. | 3 inh. | {}        | {}'.format(self.num_Syn_L3_exc_L3_inh[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L3_inh),2)))
-        print(' 4 exc. | 4 inh. | {}        | {}'.format(self.num_Syn_L4_exc_L4_inh[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L4_inh),2)))
-        print(' 1 inh. | 1 exc. | {}        | {}'.format(self.num_Syn_L1_inh_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_inh_L1_exc),2)))
-        print(' 2 inh. | 2 exc. | {}        | {}'.format(self.num_Syn_L2_inh_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_inh_L2_exc),2)))
-        print(' 3 inh. | 3 exc. | {}        | {}'.format(self.num_Syn_L3_inh_L3_exc,round(np.mean(self.affs_per_neuron_Syn_L3_inh_L3_exc),2)))
-        print(' 4 inh. | 4 exc. | {}        | {}\n'.format(self.num_Syn_L4_inh_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_inh_L4_exc),2)))
+        print(' 1 exc. | 1 inh. | {} | {}'.format(self.num_Syn_L1_exc_L1_inh[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L1_inh),2)))
+        print(' 2 exc. | 2 inh. | {} | {}'.format(self.num_Syn_L2_exc_L2_inh[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L2_inh),2)))
+        print(' 3 exc. | 3 inh. | {} | {}'.format(self.num_Syn_L3_exc_L3_inh[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L3_inh),2)))
+        print(' 4 exc. | 4 inh. | {} | {}'.format(self.num_Syn_L4_exc_L4_inh[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L4_inh),2)))
+        print(' 1 inh. | 1 exc. | {} | {}'.format(self.num_Syn_L1_inh_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_inh_L1_exc),2)))
+        print(' 2 inh. | 2 exc. | {} | {}'.format(self.num_Syn_L2_inh_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_inh_L2_exc),2)))
+        print(' 3 inh. | 3 exc. | {} | {}'.format(self.num_Syn_L3_inh_L3_exc,round(np.mean(self.affs_per_neuron_Syn_L3_inh_L3_exc),2)))
+        print(' 4 inh. | 4 exc. | {} | {}\n'.format(self.num_Syn_L4_inh_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_inh_L4_exc),2)))
         print('Self connections')
         print(' source | target | total conn\'s | aff\'s per neuron')
         print('----------------------------------------------------')
-        print(' 1 exc. | 1 exc. | {}         | {}'.format(self.num_Syn_L1_exc_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L1_exc),2))) 
-        print(' 2 exc. | 2 exc. | {}         | {}'.format(self.num_Syn_L2_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L2_exc),2))) 
-        print(' 3 exc. | 3 exc. | {}         | {}'.format(self.num_Syn_L3_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L3_exc),2)))
-        print(' 4 exc. | 4 exc. | {}         | {}\n'.format(self.num_Syn_L4_exc_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L4_exc),2))) 
+        print(' 1 exc. | 1 exc. | {} | {}'.format(self.num_Syn_L1_exc_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L1_exc_L1_exc),2))) 
+        print(' 2 exc. | 2 exc. | {} | {}'.format(self.num_Syn_L2_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L2_exc),2))) 
+        print(' 3 exc. | 3 exc. | {} | {}'.format(self.num_Syn_L3_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L3_exc),2)))
+        print(' 4 exc. | 4 exc. | {} | {}\n'.format(self.num_Syn_L4_exc_L4_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L4_exc),2))) 
         print('Feedback connections')
         print(' source | target | total conn\'s | aff\'s per neuron')
         print('----------------------------------------------------')
-        print(' 4 exc. | 3 exc. | {}         | {}'.format(self.num_Syn_L4_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L3_exc),2)))
-        print(' 3 exc. | 2 exc. | {}         | {}'.format(self.num_Syn_L3_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L2_exc),2)))
-        print(' 2 exc. | 1 exc. | {}         | {}\n'.format(self.num_Syn_L2_exc_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L1_exc),2))) 
+        print(' 4 exc. | 3 exc. | {} | {}'.format(self.num_Syn_L4_exc_L3_exc[:],round(np.mean(self.affs_per_neuron_Syn_L4_exc_L3_exc),2)))
+        print(' 3 exc. | 2 exc. | {} | {}'.format(self.num_Syn_L3_exc_L2_exc[:],round(np.mean(self.affs_per_neuron_Syn_L3_exc_L2_exc),2)))
+        print(' 2 exc. | 1 exc. | {} | {}\n'.format(self.num_Syn_L2_exc_L1_exc[:],round(np.mean(self.affs_per_neuron_Syn_L2_exc_L1_exc),2))) 
         
     # function to pass images into model
     def run_simulation(self, image, length):
@@ -681,34 +678,3 @@ def read_images(img_dir):
     #     plt.axis('off')
     #     plt.show()
     return images
-
-# function to isolate a set of neurons' spikes (after simulation run to produce raster plots - e.g. if want to only plot 50th to 100th neurons) 
-def get_neurons(mon,lower_i,upper_i):
-    neuron_set_i = []
-    neuron_set_t = []
-    for idx, neuron in enumerate(mon.i):
-        if lower_i <= neuron <= upper_i:
-            neuron_set_i.append(neuron)
-            neuron_set_t.append(mon.t[idx])
-    return neuron_set_i, neuron_set_t
-
-# function to visualise connectivity
-def visualise_connectivity(synapses):
-    Ns = len(synapses.source)
-    Nt = len(synapses.target)
-    figure(figsize=(10, 4))
-    subplot(121)
-    plot(zeros(Ns), arange(Ns), 'ok', ms=0.5)
-    plot(ones(Nt), arange(Nt), 'ok', ms=0.5)
-    for i, j in zip(synapses.i, synapses.j):
-        plot([0, 1], [i, j], '-k')
-    xticks([0, 1], ['Source', 'Target'])
-    ylabel('Neuron index')
-    xlim(-0.1, 1.1)
-    ylim(-1, max(Ns, Nt))
-    subplot(122)
-    plot(synapses.i, synapses.j, 'ok', ms=0.5)
-    xlim(-1, Ns)
-    ylim(-1, Nt)
-    xlabel('Source neuron index')
-    ylabel('Target neuron index')

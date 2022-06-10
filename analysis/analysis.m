@@ -18,6 +18,83 @@ L0_spikes_im_idx{1} = 1;
 for epoch = 1:N_epochs % loop through epochs and isolate spikes for given epoch
     L0_spikes_epoch_idx{epoch+1} = find(L0_spikes(2,:)>period*epoch,1);
     L0_spikes_epoch = L0_spikes(:,L0_spikes_epoch_idx{epoch}:L0_spikes_epoch_idx{epoch+1});
+    size(L0_spikes_epoch)
+    for im = 1:N_images % loop through images and isolate spikes for given image within epoch
+        L0_spikes_im_idx{im+1} = find(L0_spikes_epoch(2,:)>(period*(epoch-1) + show_time*im),1)
+        L0_spikes_im = L0_spikes_epoch(:,L0_spikes_im_idx{im}:L0_spikes_im_idx{im+1});
+        spikes{1,epoch,im} = L0_spikes_im; % store spikes for L0 for given epoch and image
+    end
+end
+
+% layers 1-4 exc and inh spikes
+for i = 1:4 % loop through layers 1-4
+
+    % excitatory layer
+    exc_spikes = importdata(['data/layer_' num2str(i) '_excitatory_full_spikes.csv']);
+    exc_spikes_epoch_idx{1} = 1;
+    exc_spikes_im_idx{1} = 1;
+    for epoch = 1:N_epochs % loop through epochs and isolate spikes for given epoch
+        exc_spikes_epoch_idx{epoch+1} = find(exc_spikes(2,:)>period*epoch,1);
+        exc_spikes_epoch = exc_spikes(:,exc_spikes_epoch_idx{epoch}:exc_spikes_epoch_idx{epoch+1});
+        for im = 1:N_images % loop through images and isolate spikes for given image within epoch
+            exc_spikes_im_idx{im+1} = find(exc_spikes_epoch(2,:)>(period*epoch + show_time*im),1);
+            exc_spikes_im = exc_spikes_epoch(:,exc_spikes_im_idx{im}:exc_spikes_im_idx{im+1});
+            spikes{2*i,epoch,im} = exc_spikes_im; % store spikes for L0 for given epoch and image
+        end
+    end
+    
+    % inhibitory layer
+    inh_spikes = importdata(['data/layer_' num2str(i) '_inhibitory_full_spikes.csv']);
+    inh_spikes_epoch_idx{1} = 1;
+    inh_spikes_im_idx{1} = 1;
+    for epoch = 1:N_epochs % loop through epochs and isolate spikes for given epoch
+        inh_spikes_epoch_idx{epoch+1} = find(inh_spikes(2,:)>period*epoch,1);
+        inh_spikes_epoch = inh_spikes(:,inh_spikes_epoch_idx{epoch}:inh_spikes_epoch_idx{epoch+1});
+        for im = 1:N_images % loop through images and isolate spikes for given image within epoch
+            inh_spikes_im_idx{im+1} = find(inh_spikes_epoch(2,:)>(period*epoch + show_time*im),1);
+            inh_spikes_im = inh_spikes_epoch(:,inh_spikes_im_idx{im}:inh_spikes_im_idx{im+1});
+            spikes{(2*i)+1,epoch,im} = inh_spikes_im; % store spikes for L0 for given epoch and image
+        end
+    end
+    
+end
+
+%% read weights data
+
+% layer 0 to 1 exc
+for epoch = 1:N_epochs-1 % loop through epochs (but do not include test epoch)
+    x = importdata(['data/layer_0_layer_1_exc_weights_8s_idx_pre_epoch_' num2str(epoch-1) '.csv']);
+    idx_pre = importdata(['data/layer_0_layer_1_exc_weights_8s_idx_pre_epoch_' num2str(epoch-1) '.csv']);
+    x = importdata(['data/layer_0_layer_1_exc_weights_8s_x_pre_epoch_' num2str(epoch-1) '.csv']);
+    y = importdata(['data/layer_0_layer_1_exc_weights_8s_y_pre_epoch_' num2str(epoch-1) '.csv']);
+    idx_post = importdata(['data/layer_0_layer_1_exc_weights_8s_idx_post_epoch_' num2str(epoch-1) '.csv']);
+    f = importdata(['data/layer_0_layer_1_exc_weights_8s_f_pre_epoch_' num2str(epoch-1) '.csv']);
+    w = importdata(['data/layer_0_layer_1_exc_weights_8s_w_epoch_' num2str(epoch-1) '.csv']);
+    weights{1,epoch} = [idx_pre; x; y; idx_post; f; w];
+end
+
+
+% rest of layers
+for i = 1:3 % loop through layers
+    for epoch = 1:N_epochs-1 % loop through epochs (but do not include test epoch)
+        idx_pre = importdata(['data/layer_' num2str(i) 'exc_layer_' num2str(i+1) 'exc_weights_8s_idx_pre_epoch_' num2str(epoch-1) '.csv']);
+        idx_post = importdata(['data/layer_' num2str(i) 'exc_layer_' num2str(i+1) 'exc_weights_8s_idx_post_epoch_' num2str(epoch-1) '.csv']);
+        w = importdata(['data/layer_' num2str(i) 'exc_layer_' num2str(i+1) 'exc_weights_8s_w_epoch_' num2str(epoch-1) '.csv']);
+        weights{i+1,epoch} = [idx_pre; idx_post; w];
+    end
+end
+
+%% read spike data and isolate by epoch and image stimulus 
+
+spikes_names = {'L0';'L1e';'L1i';'L2e';'L2i';'L3e';'L3i';'L4e';'L4i'}  % names 
+
+% layer 0 spikes
+L0_spikes = importdata('data/layer_0_full_spikes.csv');
+L0_spikes_epoch_idx{1} = 1;
+L0_spikes_im_idx{1} = 1;
+for epoch = 1:N_epochs % loop through epochs and isolate spikes for given epoch
+    L0_spikes_epoch_idx{epoch+1} = find(L0_spikes(2,:)>period*epoch,1);
+    L0_spikes_epoch = L0_spikes(:,L0_spikes_epoch_idx{epoch}:L0_spikes_epoch_idx{epoch+1});
     for im = 1:N_images % loop through images and isolate spikes for given image within epoch
         L0_spikes_im_idx{epoch+1} = find(L0_spikes_epoch(2,:)>(period*epoch + show_time*im),1);
         L0_spikes_im = L0_spikes_epoch(:,L0_spikes_im_idx{epoch}:L0_spikes_im_idx{epoch+1});
@@ -38,7 +115,7 @@ for i = 1:4 % loop through layers 1-4
         for im = 1:N_images % loop through images and isolate spikes for given image within epoch
             exc_spikes_im_idx{epoch+1} = find(exc_spikes_epoch(2,:)>(period*epoch + show_time*im),1);
             exc_spikes_im = exc_spikes_epoch(:,exc_spikes_im_idx{epoch}:exc_spikes_im_idx{epoch+1});
-            spikes{(2*i)-1,epoch,im} = exc_spikes_im; % store spikes for L0 for given epoch and image
+            spikes{2*i,epoch,im} = exc_spikes_im; % store spikes for L0 for given epoch and image
         end
     end
     
@@ -52,13 +129,11 @@ for i = 1:4 % loop through layers 1-4
         for im = 1:N_images % loop through images and isolate spikes for given image within epoch
             inh_spikes_im_idx{epoch+1} = find(inh_spikes_epoch(2,:)>(period*epoch + show_time*im),1);
             inh_spikes_im = inh_spikes_epoch(:,inh_spikes_im_idx{epoch}:inh_spikes_im_idx{epoch+1});
-            spikes{2*i,epoch,im} = inh_spikes_im; % store spikes for L0 for given epoch and image
+            spikes{(2*i)+1,epoch,im} = inh_spikes_im; % store spikes for L0 for given epoch and image
         end
     end
     
 end
-
-%% read weights data
 
 %% calculate average firing rates for neurons for each image
 N_neurons = [65536,4096,1024,4096,1024,4096,1024,4096,1024] % number of neurons in each layer
